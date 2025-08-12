@@ -162,11 +162,16 @@ const UserDetail: React.FC = () => {
   /** API/Lambda 호출 */
   useEffect(() => {
     if (!nickname) return;
-    if (!range || range.type !== "absolute" || !range.startDate || !range.endDate) return;
+    if (
+      !range ||
+      range.type !== "absolute" ||
+      !range.startDate ||
+      !range.endDate
+    )
+      return;
 
     const ac = new AbortController();
 
-    
     (async () => {
       try {
         setLoading(true);
@@ -198,7 +203,8 @@ const UserDetail: React.FC = () => {
           });
           if (!res.ok) throw new Error(`Lambda(analyze) HTTP ${res.status}`);
           const json: AnalyzeLambdaResp = await res.json();
-          if (!json?.success) throw new Error(json?.message || "AI 분석 수신 실패");
+          if (!json?.success)
+            throw new Error(json?.message || "AI 분석 수신 실패");
 
           // 워드클라우드: 우선 data.wordCloud, 없으면 persona.traits 사용
           const wc = json.data?.wordCloud ?? json.data?.persona?.traits ?? [];
@@ -223,7 +229,8 @@ const UserDetail: React.FC = () => {
           );
           if (!res.ok) throw new Error(`chat-kinds HTTP ${res.status}`);
           const json: ChatKindsResponse = await res.json();
-          if (!json?.success) throw new Error(json?.message || "채팅 유형 수신 실패");
+          if (!json?.success)
+            throw new Error(json?.message || "채팅 유형 수신 실패");
           setChatKinds(json.data || []);
         })();
 
@@ -235,7 +242,8 @@ const UserDetail: React.FC = () => {
           );
           if (!res.ok) throw new Error(`top-streamers HTTP ${res.status}`);
           const json: TopStreamersResponse = await res.json();
-          if (!json?.success) throw new Error(json?.message || "Top 스트리머 수신 실패");
+          if (!json?.success)
+            throw new Error(json?.message || "Top 스트리머 수신 실패");
           setTopStreamers(json.data || []);
         })();
 
@@ -247,7 +255,8 @@ const UserDetail: React.FC = () => {
           );
           if (!res.ok) throw new Error(`chat-history HTTP ${res.status}`);
           const json: ChatHistoryResponse = await res.json();
-          if (!json?.success) throw new Error(json?.message || "채팅 내역 수신 실패");
+          if (!json?.success)
+            throw new Error(json?.message || "채팅 내역 수신 실패");
           setChatHistory(json.data || []);
         })();
 
@@ -572,6 +581,17 @@ const UserDetail: React.FC = () => {
                               "시작일이 종료일보다 이전이어야 합니다.",
                           };
                         }
+                        // ✅ 미래 날짜 방지
+                        const today = new Date();
+                        if (
+                          new Date(r.startDate) > today ||
+                          new Date(r.endDate) > today
+                        ) {
+                          return {
+                            valid: false,
+                            errorMessage: "미래 날짜는 선택할 수 없습니다.",
+                          };
+                        }
                         return { valid: true };
                       }
 
@@ -596,6 +616,12 @@ const UserDetail: React.FC = () => {
                         valid: false,
                         errorMessage: "유효하지 않은 범위 형식입니다.",
                       };
+                    }}
+                    // ✅ 미래 날짜 비활성화
+                    isDateEnabled={(date) => {
+                      const today = new Date();
+                      today.setHours(0, 0, 0, 0);
+                      return date <= today;
                     }}
                     i18nStrings={{
                       todayAriaLabel: "오늘 날짜",
