@@ -31,24 +31,6 @@ interface ApiResponse {
 const API_BASE_URL =
   (import.meta as any)?.env?.VITE_API_BASE_URL || "https://api.f-yourchat.com";
 
-
-// // (TEST) 예시 데이터
-// const mockUserList = [
-//   { userId: "abc123", nickname: "스트리머1", messages: 1200 },
-//   { userId: "xyz456", nickname: "스트리머2", messages: 950 },
-//   { userId: "test789", nickname: "스트리머3", messages: 870 },
-//   { userId: "def456", nickname: "채팅왕", messages: 750 },
-//   { userId: "ghi789", nickname: "방송러버", messages: 650 },
-//   { userId: "jkl012", nickname: "댓글마스터", messages: 580 },
-//   { userId: "mno345", nickname: "실시간뷰어", messages: 420 },
-//   { userId: "pqr678", nickname: "스트림러버", messages: 350 },
-// ];
-
-// // // (TEST) 환경변수에서 테스트 모드 확인
-// // const isTestMode = process.env.REACT_APP_TEST === 'true';
-// // const apiUrl = process.env.REACT_APP_API_URL || 'https://api.f-yourchat.com';
-
-
 export default function UserList() {
   const navigate = useNavigate();
   const [userRankings, setUserRankings] = useState<UserChatRanking[]>([]);
@@ -56,75 +38,13 @@ export default function UserList() {
   const [error, setError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<string>("");
 
-  // // (TEST) 테스트 데이터를 시뮬레이션하는 함수
-  // const fetchMockData = async (): Promise<void> => {
-  //   return new Promise((resolve) => {
-  //     setTimeout(() => {
-  //       setUserRankings(mockUserList);
-  //       setLastUpdated(new Date().toLocaleString('ko-KR'));
-  //       resolve();
-  //     }, 1000); // 1초 딜레이로 실제 API 호출 시뮬레이션
-  //   });
-  // };
-
-  // // 실제 API에서 데이터 가져오기
-  // const fetchRealApiData = async (): Promise<void> => {
-  //   const response = await fetch(`${apiUrl}/api/chat-rankings/today`, {
-  //     method: 'GET',
-  //     headers: {
-  //       'Content-Type': 'application/json',
-  //       // 필요한 경우 Authorization 헤더 추가
-  //       // 'Authorization': `Bearer ${token}`,
-  //     },
-  //   });
-
-  //   if (!response.ok) {
-  //     throw new Error(`HTTP error! status: ${response.status}`);
-  //   }
-
-  //   const result: ApiResponse = await response.json();
-    
-  //   if (result.success) {
-  //     setUserRankings(result.data);
-  //     setLastUpdated(new Date().toLocaleString('ko-KR'));
-  //   } else {
-  //     throw new Error(result.message || '데이터를 가져오는데 실패했습니다.');
-  //   }
-  // };
-
-  
-  // // 오늘 날짜 채팅 랭킹 데이터 가져오기
-  // const fetchTodayChatRankings = async () => {
-  //   try {
-  //     setLoading(true);
-  //     setError(null);
-      
-  //     if (isTestMode) {
-  //       console.log('🧪 테스트 모드: 목업 데이터를 사용합니다.');
-  //       await fetchMockData();
-  //     } else {
-  //       console.log('🚀 프로덕션 모드: 실제 API를 호출합니다.');
-  //       await fetchRealApiData();
-  //     }
-      
-  //   } catch (err) {
-  //     console.error('Error fetching chat rankings:', err);
-  //     setError(err instanceof Error ? err.message : '알 수 없는 오류가 발생했습니다.');
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
-
-
-
-  // 오늘 날짜 채팅 랭킹 데이터 가져오기
   // 오늘 날짜 채팅 랭킹 데이터 가져오기 (API only)
   const fetchTodayChatRankings = async (signal?: AbortSignal) => {
     try {
       setLoading(true);
       setError(null);
 
-      const res = await fetch(`${API_BASE_URL}/api/chat-rankings/today`, {
+      const res = await fetch(`${API_BASE_URL}/chat-rankings/today`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
