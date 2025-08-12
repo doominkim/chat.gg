@@ -1,29 +1,40 @@
-// pages/UserDetail.tsx
+// // src/pages/UserDetail.tsx
 import React, { useState } from "react";
 import {
-  Container,
-  Header,
-  ColumnLayout,
   Box,
+  Container,
+  DateRangePicker,
+  Grid,
+  Header,
+  PieChart,
   SpaceBetween,
   Tabs,
-  TextContent,
-  Grid,
-  PieChart,
-  DateRangePicker,
 } from "@cloudscape-design/components";
-import ReactWordCloud from "react-d3-cloud";
 import type { DateRangePickerProps } from "@cloudscape-design/components";
-
+import ReactWordCloud from "react-d3-cloud";
 import ChatBubble from "@cloudscape-design/chat-components/chat-bubble";
 import Avatar from "@cloudscape-design/chat-components/avatar";
 
-interface ChatMessage {
+import { useParams } from "react-router-dom";
+import NotFoundUser from "./NotFoundUser";
+
+/**
+ * 테스트 데이터 설계
+ * - 닉네임: Layout.tsx의 testNicknames와 일부 매칭 (hanaro, seobin, johndoe 등)
+ * - 채널: 채널ID → 채널명
+ * - 채팅: messageType(text/emote/donation), createdAt, channelId, message, emoji 포함 여부
+ */
+
+type MessageType = "text" | "emote" | "donation";
+
+interface ChatRow {
   id: string;
-  timestamp: string;
+  nickname: string;     // 식별자 = 닉네임
+  channelId: string;    // 어떤 스트리머 채널에서 쳤는지
+  channelName: string;
   message: string;
-  sentiment: "positive" | "negative" | "neutral";
-  emotionScore: number;
+  messageType: MessageType;
+  createdAt: string;    // ISO string
 }
 
 interface WordRanking {
@@ -33,7 +44,178 @@ interface WordRanking {
   percentage: number;
 }
 
+/** 채널 사전 */
+const CHANNELS: Record<string, string> = {
+  ch_iu: "아이유 IU",
+  ch_aws: "AWS Korea",
+  ch_dev: "개발자의 품격",
+  ch_fun: "Fun&Games",
+};
+
+
+/** 닉네임별 더미 채팅 데이터 */
+const MOCK_CHAT_BY_USER: Record<string, ChatRow[]> = {
+  hanaro: [
+    // 7월 28일
+    {
+      id: "h1",
+      nickname: "hanaro",
+      channelId: "ch_iu",
+      channelName: CHANNELS["ch_iu"],
+      message: "안녕하세요! 오늘도 재밌게 볼게요",
+      messageType: "text",
+      createdAt: "2024-07-28T14:30:10Z",
+    },
+    {
+      id: "h2",
+      nickname: "hanaro",
+      channelId: "ch_dev",
+      channelName: CHANNELS["ch_dev"],
+      message: "이 라이브 너무 유익합니다 🙌",
+      messageType: "emote",
+      createdAt: "2024-07-28T15:12:44Z",
+    },
+    // 7월 29일
+    {
+      id: "h3",
+      nickname: "hanaro",
+      channelId: "ch_aws",
+      channelName: CHANNELS["ch_aws"],
+      message: "What can I do with Amazon S3?",
+      messageType: "text",
+      createdAt: "2024-07-29T09:05:02Z",
+    },
+    {
+      id: "h4",
+      nickname: "hanaro",
+      channelId: "ch_aws",
+      channelName: CHANNELS["ch_aws"],
+      message: "소소하지만 응원합니다! ₩5000",
+      messageType: "donation",
+      createdAt: "2024-07-29T09:06:30Z",
+    },
+    // 7월 30일
+    {
+      id: "h5",
+      nickname: "hanaro",
+      channelId: "ch_fun",
+      channelName: CHANNELS["ch_fun"],
+      message: "이번 게임 진짜 어렵네요 ㅠㅠ",
+      messageType: "text",
+      createdAt: "2024-07-30T20:15:11Z",
+    },
+    {
+      id: "h6",
+      nickname: "hanaro",
+      channelId: "ch_fun",
+      channelName: CHANNELS["ch_fun"],
+      message: "다음에 또 봐요~ 😊",
+      messageType: "emote",
+      createdAt: "2024-07-30T20:45:58Z",
+    },
+  ],
+  seobin: [
+    {
+      id: "s1",
+      nickname: "seobin",
+      channelId: "ch_dev",
+      channelName: CHANNELS["ch_dev"],
+      message: "테스트 데이터로 대시보드 확인 중",
+      messageType: "text",
+      createdAt: "2024-07-29T12:21:10Z",
+    },
+    {
+      id: "s2",
+      nickname: "seobin",
+      channelId: "ch_dev",
+      channelName: CHANNELS["ch_dev"],
+      message: "👍👍👍",
+      messageType: "emote",
+      createdAt: "2024-07-29T12:25:10Z",
+    },
+    {
+      id: "s3",
+      nickname: "seobin",
+      channelId: "ch_iu",
+      channelName: CHANNELS["ch_iu"],
+      message: "최고의 무대였습니다!",
+      messageType: "text",
+      createdAt: "2024-07-30T17:00:00Z",
+    },
+  ],
+  johndoe: [
+    {
+      id: "j1",
+      nickname: "johndoe",
+      channelId: "ch_aws",
+      channelName: CHANNELS["ch_aws"],
+      message: "오늘도 좋은 방송 감사합니다",
+      messageType: "text",
+      createdAt: "2024-07-30T11:00:00Z",
+    },
+    {
+      id: "j2",
+      nickname: "johndoe",
+      channelId: "ch_aws",
+      channelName: CHANNELS["ch_aws"],
+      message: "응원합니다! ₩10000",
+      messageType: "donation",
+      createdAt: "2024-07-30T11:10:00Z",
+    },
+  ],
+};
+
+/** 닉네임별 사용자 성향(워드클라우드) 샘플 */
+const MOCK_TRAITS: Record<
+  string,
+  { trait: string; score: number }[]
+> = {
+  hanaro: [
+    { trait: "친근함", score: 200 },
+    { trait: "유머러스", score: 120 },
+    { trait: "긍정", score: 90 },
+    { trait: "활발함", score: 160 },
+    { trait: "분석적", score: 60 },
+    { trait: "공감", score: 80 },
+  ],
+  seobin: [
+    { trait: "성실함", score: 180 },
+    { trait: "호기심", score: 140 },
+    { trait: "긍정", score: 100 },
+    { trait: "차분함", score: 80 },
+  ],
+  johndoe: [
+    { trait: "활발함", score: 150 },
+    { trait: "친근함", score: 110 },
+    { trait: "공감", score: 90 },
+    { trait: "도전적", score: 70 },
+  ],
+};
+
+/** 닉네임별 많이 쓴 단어 Top N (샘플) */
+const MOCK_WORDS: Record<string, WordRanking[]> = {
+  hanaro: [
+    { word: "안녕하세요", count: 23 },
+    { word: "재미있어요", count: 19 },
+    { word: "최고", count: 15 },
+    { word: "AWS", count: 12 },
+    { word: "감사합니다", count: 10 },
+  ],
+  seobin: [
+    { word: "좋아요", count: 14 },
+    { word: "대박", count: 11 },
+    { word: "유익해요", count: 9 },
+  ],
+  johndoe: [
+    { word: "감사합니다", count: 12 },
+    { word: "응원합니다", count: 9 },
+    { word: "S3", count: 7 },
+  ],
+};
+
 const UserDetail: React.FC = () => {
+  const { nickname = "" } = useParams<{ nickname : string }>();
+
   const [selectedDate, setSelectedDate] = useState("2025-07-30");
   const [showChatModal, setShowChatModal] = useState(false);
   const [selectedChatMessages, setSelectedChatMessages] = useState<
@@ -41,13 +223,36 @@ const UserDetail: React.FC = () => {
   >([]);
 
   // 사용자 정보
-  const userInfo = {
-    userId: "bas123",
-    joinDate: "2024-01-15",
-    totalMessages: 1847,
-    avgDaily: 12.3,
-    lastActive: "2시간 전",
+  // 💡 예시: userId에 따라 동적으로 유저 정보 가져오기 (mock 처리)
+  const mockUsers = {
+    abc123: {
+      nickname: "abc123",
+      joinDate: "2024-01-15",
+      totalMessages: 1847,
+      avgDaily: 12.3,
+      lastActive: "2시간 전",
+    },
+    xyz456: {
+      nickname: "xyz456",
+      joinDate: "2023-11-01",
+      totalMessages: 900,
+      avgDaily: 10.5,
+      lastActive: "3일 전",
+    },
+    test789: {
+      nickname: "seobin",
+      joinDate: "2025-01-01",
+      totalMessages: 500,
+      avgDaily: 6.1,
+      lastActive: "1시간 전",
+    },
   };
+  
+  const userInfo = nickname ? mockUsers[nickname] : undefined;
+
+  if (!userInfo) {
+    return  < NotFoundUser />;
+  }
 
   const personalityTraits = [
     { trait: "친근함", score: 200 },
@@ -167,18 +372,13 @@ const UserDetail: React.FC = () => {
     <SpaceBetween size="l">
       <Box
         variant="h1"
-        style={{
-          minHeight: "80px", // 최소 높이로 변경
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          flexWrap: "nowrap", // 줄바꿈 방지
-        }}
       >
         <SpaceBetween size="l">
-          <Box style={{ flex: "1 1 auto", minWidth: 0 }}>
+          <Box 
+          // style={{ flex: "1 1 auto", minWidth: 0 }}
+          >
             <Header variant="h1">
-              🤖 a 유저의 채팅을 분석한 내용입니다.{" "}
+              🤖 [{nickname}] 유저의 채팅을 분석한 내용입니다.{" "}
               <Box
                 display="inline"
                 fontSize="heading-m"
@@ -202,22 +402,13 @@ const UserDetail: React.FC = () => {
           ]}
         >
           {/* 왼쪽 세트: 사용자 감정 분석 + 채팅 유형 */}
-          <Container fitHeight header={<Header>사용자 감정 분석</Header>}>
+          <Container fitHeight header={<Header>사용자 분석</Header>}>
             <Box
-            // 단어 맵이 container 외부 벗어나면 해당 주석 풀기
-            // style={{
-            //   width: "100%",
-            //   height: "400px",
-            //   position: "relative",
-            //   display: "flex",
-            //   justifyContent: "center",
-            //   alignItems: "center",
-            //   overflow: "hidden", // SVG가 컨테이너를 벗어나지 않도록
-            //   border: "1px solid #ddd", // 디버깅용 테두리
-            //   borderRadius: "8px",
-            // }}
             >
               <ReactWordCloud
+
+                // Bedrock 처리
+
                 data={personalityTraitsData}
                 width={400}
                 height={400}
@@ -232,8 +423,16 @@ const UserDetail: React.FC = () => {
             <SpaceBetween size="s">
               <Box>
                 {wordRankings.map((item) => (
-                  <Box display="flex" justifyContent="space-between">
-                    <Box display="flex" alignItems="center">
+                  <Box 
+                  >
+                    <Box 
+                    >
+
+                      
+                // Bedrock 처리
+
+
+
                       {getRankBadge(item.rank)}
                       {item.word}
                     </Box>
@@ -269,7 +468,6 @@ const UserDetail: React.FC = () => {
           >
             <PieChart
               data={chatKindData}
-              // height={300}
               ariaLabel="Pie chart"
               ariaDescription="Chat categories"
               detailPopoverContent={(datum, sum) => [
@@ -295,8 +493,10 @@ const UserDetail: React.FC = () => {
             <SpaceBetween size="s">
               <Box>
                 {wordRankings.map((item) => (
-                  <Box display="flex" justifyContent="space-between">
-                    <Box display="flex" alignItems="center">
+                  <Box 
+                  >
+                    <Box 
+                    >
                       {getRankBadge(item.rank)}
                       {item.word}
                     </Box>
@@ -329,7 +529,7 @@ const UserDetail: React.FC = () => {
         {/* 오른쪽 4칸: 채팅 내역 전체 */}
         <Container fitHeight header={<Header>채팅 내역</Header>}>
           <SpaceBetween size="l">
-            <Box fitWidth>
+            <Box >
               <DateRangePicker
                 onChange={({ detail }) => setValue(detail.value)}
                 value={value}
@@ -383,9 +583,6 @@ const UserDetail: React.FC = () => {
             </Box>
 
             <Box
-              padding="none"
-              // backgroundColor="grey-100"
-              // Cloudscape에서 지원하는 속성들만 사용
               display="block"
               textAlign="left"
             >
@@ -399,17 +596,6 @@ const UserDetail: React.FC = () => {
                       content: (
                         <Box
                           padding="s"
-                          style={
-                            {
-                              // maxHeight, overflowY를 줘야 스크롤 작동함
-                              minHeight: "1000px",
-                              maxHeight: "400px",
-                              overflowY: "auto",
-                              backgroundColor: "#241c1cff",
-                              borderRadius: "8px",
-                              border: "1px solid #ddd",
-                            } as React.CSSProperties
-                          }
                         >
                           <SpaceBetween size="s">
                             {/* <Box>

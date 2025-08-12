@@ -215,6 +215,14 @@ export default function Dashboard() {
 
   const today = useMemo(todayKST, []);
 
+  const todayAtKST = (h: number, m: number, s: number = 0) =>
+    new Date(
+      `${today}T${String(h).padStart(2, "0")}:${String(m).padStart(
+        2,
+        "0"
+      )}:${String(s).padStart(2, "0")}+09:00`
+    );
+
   useEffect(() => {
     const ac = new AbortController();
     (async () => {
@@ -226,6 +234,7 @@ export default function Dashboard() {
         });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const json: SummaryResponse = await res.json();
+        console.log("[SummaryResponse]", json);
 
         if (!json?.success)
           throw new Error(json?.message || "요약 데이터 수신 실패");
@@ -357,9 +366,7 @@ export default function Dashboard() {
     <SpaceBetween size="l">
       <Box variant="h1">
         <SpaceBetween size="l">
-          <Box
-          // style={{ flex: "1 1 auto", minWidth: 0 }}
-          >
+          <Box>
             <Header variant="h1">
               🚀 실시간 치지직 채팅 분석{" "}
               <Box
@@ -455,9 +462,13 @@ export default function Dashboard() {
               ...thresholdSeries,
               // { title: "피크 시간대", type: "threshold", x: peakPoint.x },
             ]}
+            // xDomain={[
+            //   new Date("2024-08-01T00:00:00+09:00"),
+            //   new Date("2024-08-01T23:59:59+09:00"),
+            // ]}
             xDomain={[
-              new Date("2024-08-01T00:00:00+09:00"),
-              new Date("2024-08-01T23:59:59+09:00"),
+              todayAtKST(0, 0, 0), // 오늘 00:00:00
+              todayAtKST(23, 59, 59), // 오늘 23:59:59
             ]}
             yDomain={[0, Math.ceil(maxY / 100) * 100]}
             height={300}
@@ -525,7 +536,7 @@ export default function Dashboard() {
               { title: "받은 🧀", type: "bar", data: streamerDonationData },
             ]}
             xDomain={streamerDonationData.map((d) => d.x)}
-            yDomain={[0, 10000]}
+            yDomain={[0, 100000000]}
             height={300}
             horizontalBars
             hideFilter
@@ -540,7 +551,7 @@ export default function Dashboard() {
           <BarChart
             series={[{ title: "보낸 🧀", type: "bar", data: userDonationData }]}
             xDomain={userDonationData.map((d) => d.x)}
-            yDomain={[0, 10000]}
+            yDomain={[0, 10000000]}
             height={300}
             horizontalBars
             hideFilter
