@@ -277,7 +277,7 @@ export default function UserList() {
           items={userRankings}
           onRowClick={({ detail }) => {
             const user = detail.item as UserChatRanking;
-            navigate(`/users/${user.userIdHash}`);
+            navigate(`/user/${user.nickname}`);
           }}
           variant="full-page"
           stickyHeader
