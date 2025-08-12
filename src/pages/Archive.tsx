@@ -107,15 +107,24 @@ const mapTopDonorsFromSummary = (res: SummaryResponse) =>
   (res.data.charts.topDonors ?? []).map((r) => ({ x: r.name, y: r.amount }));
 
 export default function Archive() {
-  // 기본값: 오늘 날짜 문자열 (YYYY-MM-DD)
-  const [selectedDate, setSelectedDate] = useState(
-    new Intl.DateTimeFormat("en-CA", {
-      timeZone: "Asia/Seoul",
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-    }).format(new Date())
-  );
+  // KST 기준 포맷터
+  const kstFmt = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Seoul",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+
+  // 오늘/어제 (KST)
+  const today = new Date();
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+
+  const todayStr = kstFmt.format(today);
+  const yesterdayStr = kstFmt.format(yesterday);
+
+  // ✅ 초기값: 어제
+  const [selectedDate, setSelectedDate] = useState(yesterdayStr);
 
   // 상단 카드 상태
   const [loading, setLoading] = useState(true);
@@ -229,13 +238,13 @@ export default function Archive() {
         <Box>
           <FormField>
             <DatePicker
-              onChange={({ detail }) => setSelectedDate(detail.value)}
               value={selectedDate}
+              onChange={({ detail }) => setSelectedDate(detail.value)}
               placeholder="YYYY-MM-DD"
-              openCalendarAriaLabel={(selectedDate) =>
-                `날짜 선택 ${
-                  selectedDate ? `, 선택된 날짜: ${selectedDate}` : ""
-                }`
+              // ✅ 미래 날짜 비활성화 (KST 기준)
+              isDateEnabled={(date) => kstFmt.format(date) <= todayStr}
+              openCalendarAriaLabel={(d) =>
+                `날짜 선택${d ? `, 선택된 날짜: ${d}` : ""}`
               }
               expandToViewport
             />
