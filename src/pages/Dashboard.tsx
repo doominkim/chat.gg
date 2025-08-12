@@ -13,6 +13,7 @@ import {
   Flashbar,
   Link,
 } from "@cloudscape-design/components";
+import type { FlashbarProps } from "@cloudscape-design/components";
 
 const API_BASE_URL =
   (import.meta as any)?.env?.VITE_API_BASE_URL || "https://api.f-yourchat.com";
@@ -155,12 +156,14 @@ export default function Dashboard() {
   }, []);
 
   // Flash 메시지
-  const [items, setItems] = React.useState([
+  const [items, setItems] = useState<FlashbarProps.MessageDefinition[]>([
     {
+      id: "notice_1",
       type: "info",
       dismissible: true,
       dismissLabel: "닫기",
       onDismiss: () => setItems([]),
+      // content: <div>알림 메시지</div>,
       content: (
         <>
           과거의 채팅 분석 정보를 확인해보세요.{" "}
@@ -169,7 +172,6 @@ export default function Dashboard() {
           </Link>
         </>
       ),
-      id: "notice_1",
     },
   ]);
 
