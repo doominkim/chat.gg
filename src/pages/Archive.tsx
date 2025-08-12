@@ -165,6 +165,8 @@ export default function Archive() {
         });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const json: SummaryResponse = await res.json();
+        console.log("[SummaryResponse]", json);
+
         if (!json?.success)
           throw new Error(json?.message || "요약 데이터 수신 실패");
 
@@ -225,7 +227,6 @@ export default function Archive() {
           🗂️ {selectedDate} 치지직 채팅 분석 (아카이브)
         </Header>
         <Box>
-
           <FormField>
             <DatePicker
               onChange={({ detail }) => setSelectedDate(detail.value)}
@@ -384,10 +385,7 @@ export default function Archive() {
               { title: "받은 🧀", type: "bar", data: streamerDonationData },
             ]}
             xDomain={streamerDonationData.map((d) => d.x)}
-            yDomain={[
-              0,
-              100000000
-            ]}
+            yDomain={[0, 100000000]}
             height={300}
             horizontalBars
             hideFilter
@@ -399,10 +397,7 @@ export default function Archive() {
           <BarChart
             series={[{ title: "보낸 🧀", type: "bar", data: userDonationData }]}
             xDomain={userDonationData.map((d) => d.x)}
-            yDomain={[
-              0,
-              10000000
-            ]}
+            yDomain={[0, 10000000]}
             height={300}
             horizontalBars
             hideFilter
