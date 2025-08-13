@@ -101,6 +101,50 @@ export interface ChatRanking {
   };
 }
 
+export interface DonationStreamerRanking {
+  message: string;
+  timestamp: string;
+  date: string;
+  channelId: string;
+  ranking: Array<{
+    rank: number;
+    streamerName: string;
+    receivedCheese: number;
+    donorCount: number;
+    profileImage: string;
+    streamerId: string;
+  }>;
+  summary: {
+    totalStreamers: number;
+    totalDonors: number;
+    totalDonatedCheese: number;
+    averageDonation: number;
+    lastUpdated: string;
+  };
+}
+
+export interface DonationDonorRanking {
+  message: string;
+  timestamp: string;
+  date: string;
+  channelId: string;
+  ranking: Array<{
+    rank: number;
+    username: string;
+    donatedCheese: number;
+    donationCount: number;
+    profileImage: string;
+    donorId: string;
+  }>;
+  summary: {
+    totalStreamers: number;
+    totalDonors: number;
+    totalDonatedCheese: number;
+    averageDonation: number;
+    lastUpdated: string;
+  };
+}
+
 export const dashboardService = {
   async getDashboardStats(): Promise<ApiResponse<DashboardStats>> {
     return apiClient.get<DashboardStats>("/dashboard/stats");
@@ -142,6 +186,46 @@ export const dashboardService = {
       : "/dashboard/chat-ranking";
 
     return apiClient.get<ChatRanking>(endpoint);
+  },
+
+  async getDonationStreamerRanking(params?: {
+    period?: string;
+    channelId?: string;
+  }): Promise<ApiResponse<DonationStreamerRanking>> {
+    const queryParams = new URLSearchParams();
+    if (params?.period) {
+      queryParams.append("period", params.period);
+    }
+    if (params?.channelId) {
+      queryParams.append("channelId", params.channelId);
+    }
+
+    const queryString = queryParams.toString();
+    const endpoint = queryString
+      ? `/dashboard/donation-streamer-ranking?${queryString}`
+      : "/dashboard/donation-streamer-ranking";
+
+    return apiClient.get<DonationStreamerRanking>(endpoint);
+  },
+
+  async getDonationDonorRanking(params?: {
+    period?: string;
+    channelId?: string;
+  }): Promise<ApiResponse<DonationDonorRanking>> {
+    const queryParams = new URLSearchParams();
+    if (params?.period) {
+      queryParams.append("period", params.period);
+    }
+    if (params?.channelId) {
+      queryParams.append("channelId", params.channelId);
+    }
+
+    const queryString = queryParams.toString();
+    const endpoint = queryString
+      ? `/dashboard/donation-donor-ranking?${queryString}`
+      : "/dashboard/donation-donor-ranking";
+
+    return apiClient.get<DonationDonorRanking>(endpoint);
   },
 
   async getRecentChats(limit: number = 10): Promise<ApiResponse<ChatData[]>> {

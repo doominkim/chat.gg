@@ -21,6 +21,8 @@ import type {
   ChatTypeDistribution,
   HourlyChatTypeDistribution,
   ChatRanking,
+  DonationStreamerRanking,
+  DonationDonorRanking,
 } from "../api/services/dashboardService";
 
 type SummaryResponse = {
@@ -196,6 +198,16 @@ export default function Dashboard() {
     []
   );
 
+  const donationStreamerRankingApiCall = useCallback(
+    () => dashboardService.getDonationStreamerRanking(),
+    []
+  );
+
+  const donationDonorRankingApiCall = useCallback(
+    () => dashboardService.getDonationDonorRanking(),
+    []
+  );
+
   // 상단 3카드 상태 - 새로운 API 사용
   const {
     data: overviewData,
@@ -223,6 +235,20 @@ export default function Dashboard() {
     loading: chatRankingLoading,
     error: chatRankingError,
   } = useApi<ChatRanking>(chatRankingApiCall, []);
+
+  // 후원 스트리머 랭킹 API 호출
+  const {
+    data: donationStreamerData,
+    loading: donationStreamerLoading,
+    error: donationStreamerError,
+  } = useApi<DonationStreamerRanking>(donationStreamerRankingApiCall, []);
+
+  // 치즈 도네이션 랭킹 API 호출
+  const {
+    data: donationDonorData,
+    loading: donationDonorLoading,
+    error: donationDonorError,
+  } = useApi<DonationDonorRanking>(donationDonorRankingApiCall, []);
 
   // 실제 API 응답 구조에 맞게 데이터 추출
   const totalToday = overviewData?.data?.todayChatCount ?? 0;
@@ -347,22 +373,32 @@ export default function Dashboard() {
         { name: "무야호", count: 100 },
       ];
 
-  // 치즈 랭킹 더미 데이터
-  const streamerDonationData = [
-    { x: "쏘쿨BJ", y: 8500 },
-    { x: "도라BJ", y: 6200 },
-    { x: "고양이BJ", y: 5800 },
-    { x: "치지직왕", y: 4100 },
-    { x: "노래하는형", y: 3500 },
-  ];
+  // 치즈 랭킹 API 데이터
+  const streamerDonationData = donationStreamerData?.ranking
+    ? donationStreamerData.ranking.map((streamer) => ({
+        x: streamer.streamerName,
+        y: streamer.receivedCheese,
+      }))
+    : [
+        { x: "쏘쿨BJ", y: 8500 },
+        { x: "도라BJ", y: 6200 },
+        { x: "고양이BJ", y: 5800 },
+        { x: "치지직왕", y: 4100 },
+        { x: "노래하는형", y: 3500 },
+      ];
 
-  const userDonationData = [
-    { x: "기부왕123", y: 10000 },
-    { x: "후원봇", y: 8300 },
-    { x: "팬클럽1호", y: 7000 },
-    { x: "닉네임김치", y: 6400 },
-    { x: "익명기부", y: 5000 },
-  ];
+  const userDonationData = donationDonorData?.ranking
+    ? donationDonorData.ranking.map((donor) => ({
+        x: donor.username,
+        y: donor.donatedCheese,
+      }))
+    : [
+        { x: "기부왕123", y: 10000 },
+        { x: "후원봇", y: 8300 },
+        { x: "팬클럽1호", y: 7000 },
+        { x: "닉네임김치", y: 6400 },
+        { x: "익명기부", y: 5000 },
+      ];
 
   const todayAtKST = (h: number, m: number, s: number = 0) =>
     new Date(
@@ -379,15 +415,31 @@ export default function Dashboard() {
   const totalBadge = badgeFromDelta(totalDelta);
   const donBadge = badgeFromDelta(donDelta);
 
-  // BarChart yDomain 계산 (금액 최대치 기반, 1만 단위 올림)
+  // BarChart yDomain 계산 (금액 최대치 기반, 적절한 단위로 올림)
   const maxStreamerY = streamerDonationData.length
     ? Math.max(...streamerDonationData.map((d) => d.y))
     : 0;
   const maxUserY = userDonationData.length
     ? Math.max(...userDonationData.map((d) => d.y))
     : 0;
-  const roundUp = (v: number, step: number) =>
-    Math.max(step, Math.ceil(v / step) * step);
+
+  // 동적 Y축 최대값 계산 함수
+  const calculateYDomain = (maxValue: number) => {
+    if (maxValue === 0) return [0, 1000];
+
+    // 최대값에 따라 적절한 단위 결정
+    if (maxValue < 1000) {
+      return [0, Math.ceil(maxValue / 100) * 100];
+    } else if (maxValue < 10000) {
+      return [0, Math.ceil(maxValue / 1000) * 1000];
+    } else if (maxValue < 100000) {
+      return [0, Math.ceil(maxValue / 10000) * 10000];
+    } else if (maxValue < 1000000) {
+      return [0, Math.ceil(maxValue / 100000) * 100000];
+    } else {
+      return [0, Math.ceil(maxValue / 1000000) * 1000000];
+    }
+  };
 
   // LineChart 시리즈 구성 (채팅, 블라인드, 후원, 피크 시간대)
   const lineChartSeries = [
@@ -715,32 +767,62 @@ export default function Dashboard() {
           // fitHeight
           header={<Header variant="h2">🤑 치즈 후원 스트리머 랭킹</Header>}
         >
-          <BarChart
-            series={[
-              { title: "받은 🧀", type: "bar", data: streamerDonationData },
-            ]}
-            xDomain={streamerDonationData.map((d) => d.x)}
-            yDomain={[0, 100000000]}
-            height={300}
-            horizontalBars
-            hideFilter
-            ariaLabel="Streamer donation ranking chart"
-          />
+          {donationStreamerLoading ? (
+            <Box textAlign="center" padding="xl">
+              <Box fontSize="heading-m" color="text-status-info">
+                스트리머 랭킹 데이터를 불러오는 중...
+              </Box>
+            </Box>
+          ) : donationStreamerError ? (
+            <Box textAlign="center" padding="xl">
+              <Box fontSize="heading-m" color="text-status-error">
+                스트리머 랭킹 데이터 로드 중 오류가 발생했습니다.
+              </Box>
+            </Box>
+          ) : (
+            <BarChart
+              series={[
+                { title: "받은 🧀", type: "bar", data: streamerDonationData },
+              ]}
+              xDomain={streamerDonationData.map((d) => d.x)}
+              yDomain={calculateYDomain(maxStreamerY)}
+              height={300}
+              horizontalBars
+              hideFilter
+              ariaLabel="Streamer donation ranking chart"
+            />
+          )}
         </Container>
 
         <Container
           // fitHeight
           header={<Header variant="h2">💸 치즈 도네이션 랭킹</Header>}
         >
-          <BarChart
-            series={[{ title: "보낸 🧀", type: "bar", data: userDonationData }]}
-            xDomain={userDonationData.map((d) => d.x)}
-            yDomain={[0, 10000000]}
-            height={300}
-            horizontalBars
-            hideFilter
-            ariaLabel="User donation ranking chart"
-          />
+          {donationDonorLoading ? (
+            <Box textAlign="center" padding="xl">
+              <Box fontSize="heading-m" color="text-status-info">
+                도네이션 랭킹 데이터를 불러오는 중...
+              </Box>
+            </Box>
+          ) : donationDonorError ? (
+            <Box textAlign="center" padding="xl">
+              <Box fontSize="heading-m" color="text-status-error">
+                도네이션 랭킹 데이터 로드 중 오류가 발생했습니다.
+              </Box>
+            </Box>
+          ) : (
+            <BarChart
+              series={[
+                { title: "보낸 🧀", type: "bar", data: userDonationData },
+              ]}
+              xDomain={userDonationData.map((d) => d.x)}
+              yDomain={calculateYDomain(maxUserY)}
+              height={300}
+              horizontalBars
+              hideFilter
+              ariaLabel="User donation ranking chart"
+            />
+          )}
         </Container>
       </Grid>
     </SpaceBetween>
