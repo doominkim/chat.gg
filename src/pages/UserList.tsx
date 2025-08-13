@@ -8,7 +8,8 @@ import {
   Box,
 } from "@cloudscape-design/components";
 import { useApi } from "../api/hooks";
-import { userService, User } from "../api/services";
+import { userService } from "../api/services";
+import type { User } from "../api/services/userService";
 
 export default function UserList() {
   const {
@@ -42,7 +43,7 @@ export default function UserList() {
     <Container>
       <Header variant="h1">사용자 목록</Header>
       <Table
-        items={users?.data || []}
+        items={users || []}
         columnDefinitions={[
           {
             id: "id",
