@@ -8,12 +8,14 @@ import {
   PieChart,
   SpaceBetween,
   Tabs,
+  Input,
+  Button,
 } from "@cloudscape-design/components";
 import type { DateRangePickerProps } from "@cloudscape-design/components";
 import ReactWordCloud from "react-d3-cloud";
 import ChatBubble from "@cloudscape-design/chat-components/chat-bubble";
 import Avatar from "@cloudscape-design/chat-components/avatar";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import NotFoundUser from "./NotFoundUser";
 import type {
   ChatMessage,
@@ -52,6 +54,9 @@ const getRankBadge = (rank: number) => {
 /** ===== component ===== */
 const UserDetail: React.FC = () => {
   const { nickname = "" } = useParams<{ nickname: string }>();
+  const navigate = useNavigate();
+  const [searchValue, setSearchValue] = useState("");
+  const [isSearching, setIsSearching] = useState(false);
 
   /** 날짜 범위(기본: 지난 한 달) */
   const [range, setRange] = useState<DateRangePickerProps.Value | null>({
@@ -149,6 +154,71 @@ const UserDetail: React.FC = () => {
 
   /** 로딩 상태 */
   const loading = false;
+
+  // 검색 처리 (더미 데이터 사용)
+  const handleSearch = () => {
+    if (!searchValue.trim()) return;
+
+    setIsSearching(true);
+
+    // 실제 API가 없으므로 더미 데이터로 테스트
+    setTimeout(() => {
+      const dummyUsers = [
+        {
+          id: "1",
+          name: "테스트유저1",
+          email: "test1@example.com",
+          createdAt: "2024-01-01T00:00:00Z",
+          updatedAt: "2024-01-01T00:00:00Z",
+        },
+        {
+          id: "2",
+          name: "테스트유저2",
+          email: "test2@example.com",
+          createdAt: "2024-01-02T00:00:00Z",
+          updatedAt: "2024-01-02T00:00:00Z",
+        },
+        {
+          id: "3",
+          name: "테스트유저3",
+          email: "test3@example.com",
+          createdAt: "2024-01-03T00:00:00Z",
+          updatedAt: "2024-01-03T00:00:00Z",
+        },
+      ];
+
+      const filteredUsers = dummyUsers.filter(
+        (user) =>
+          user.name.toLowerCase().includes(searchValue.toLowerCase()) ||
+          user.id.toLowerCase().includes(searchValue.toLowerCase())
+      );
+
+      const dummyResult = {
+        userIdHashes: filteredUsers.map((user) => user.id),
+        users: filteredUsers,
+      };
+
+      // 여러 유저가 있으면 선택 페이지로, 1명이면 바로 상세 페이지로
+      if (dummyResult.users.length > 1) {
+        navigate("/user-select", {
+          state: {
+            users: dummyResult.users,
+            userIdHashes: dummyResult.userIdHashes,
+            searchTerm: searchValue,
+          },
+        });
+      } else if (dummyResult.users.length === 1) {
+        navigate(`/user/${dummyResult.users[0].name}`);
+      }
+      setIsSearching(false);
+    }, 500); // 로딩 효과를 위한 지연
+  };
+
+  const handleKeyDown = (event: CustomEvent<{ key: string }>) => {
+    if (event.detail.key === "Enter") {
+      handleSearch();
+    }
+  };
 
   /** 스트리머별 탭 구성 */
   const tabs = useMemo(() => {
@@ -251,6 +321,27 @@ const UserDetail: React.FC = () => {
                 margin={{ left: "l" }}
               ></Box>
             </Header>
+          </Box>
+
+          {/* 닉네임 검색 영역 */}
+          <Box>
+            <SpaceBetween size="s" direction="horizontal">
+              <Input
+                value={searchValue}
+                onChange={({ detail }) => setSearchValue(detail.value)}
+                placeholder="다른 유저의 닉네임을 입력하세요"
+                onKeyDown={handleKeyDown}
+                disabled={isSearching}
+              />
+              <Button
+                variant="primary"
+                onClick={handleSearch}
+                loading={isSearching}
+                disabled={!searchValue.trim()}
+              >
+                검색
+              </Button>
+            </SpaceBetween>
           </Box>
         </SpaceBetween>
       </Box>

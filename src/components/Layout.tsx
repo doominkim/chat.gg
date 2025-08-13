@@ -7,13 +7,12 @@ import {
   Autosuggest,
   FormField,
 } from "@cloudscape-design/components";
+import { userService } from "../api/services";
+import type { UserSearchResult } from "../api/services/userService";
 
 interface LayoutProps {
   children: React.ReactNode;
 }
-
-const API_BASE_URL =
-  (import.meta as any)?.env?.VITE_API_BASE_URL || "https://api.f-yourchat.com";
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
   const navigate = useNavigate();
@@ -27,7 +26,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const isValidNickname = (s: string) =>
     /^[\p{L}\p{N}_\-. ]{2,30}$/u.test(s.trim());
 
-  // 자동완성 로드: 테스트 모드면 로컬 데이터, 아니면 API 호출
+  // 자동완성 로드: 실제 API 호출 (GET /user/search/userIdHash?nickname=&channelId=)
   const loadSuggestions = async (q: string) => {
     const query = q.trim();
     if (!query) {
@@ -38,18 +37,12 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     try {
       setLoading(true);
       setStatus(null);
-      const resp = await fetch(
-        `${API_BASE_URL}/users/search?nickname=${encodeURIComponent(
-          query
-        )}&limit=10`,
-        { credentials: "include" }
-      );
-      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-      const data: string[] = await resp.json(); // 닉네임 목록만 반환
-      setOptions(data.map((name) => ({ value: name })));
+      const resp = await userService.searchUsers({ nickname: query });
+      const data: UserSearchResult = resp.data;
+      const names = (data.users || []).map((u) => u.name);
+      setOptions(names.map((name) => ({ value: name })));
     } catch {
       setOptions([]);
-      // setStatus("검색 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
     } finally {
       setLoading(false);
     }
@@ -71,19 +64,27 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       setLoading(true);
       setStatus(null);
 
-      // 유저 존재 여부 확인
-      const response = await fetch(
-        `${API_BASE_URL}/user/check/${encodeURIComponent(q)}`,
-        { credentials: "include", method: "GET" }
-      );
+      // 실제 API로 검색하여 userIdHashes 개수로 판단
+      const resp = await userService.searchUsers({ nickname: q });
+      const data: UserSearchResult = resp.data;
+      const users = data.users || [];
+      const count = Array.isArray(data.userIdHashes)
+        ? data.userIdHashes.length
+        : 0;
 
-      if (response.ok) {
-        const result = await response.json();
-        result?.exists ? toUserDetail(q) : toNotFound(q);
-      } else if (response.status === 404) {
+      if (count === 0) {
         toNotFound(q);
+      } else if (count === 1) {
+        const name = users[0]?.name || q;
+        toUserDetail(name);
       } else {
-        toNotFound(q);
+        navigate("/user-select", {
+          state: {
+            users,
+            userIdHashes: data.userIdHashes || [],
+            searchTerm: q,
+          },
+        });
       }
     } catch (error) {
       console.error("User check failed:", error);

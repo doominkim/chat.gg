@@ -6,6 +6,7 @@ import UserDetail from "./pages/UserDetail";
 import Archive from "./pages/Archive";
 import NotFoundUser from "./pages/NotFoundUser";
 import UserList from "./pages/UserList";
+import UserSelect from "./pages/UserSelect";
 import "@cloudscape-design/global-styles/index.css";
 import {
   BrowserRouter as Router,
@@ -23,6 +24,7 @@ const App: React.FC = () => {
           <Route path="/" element={<Navigate to="/dashboard" />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/user-rank" element={<UserList />} />
+          <Route path="/user-select" element={<UserSelect />} />
           <Route path="/user/:nickname" element={<UserDetail />} />
           <Route path="/archive" element={<Archive />} />
           <Route path="/not-found" element={<NotFoundUser />} />
