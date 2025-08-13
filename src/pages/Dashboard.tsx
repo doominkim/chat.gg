@@ -200,33 +200,91 @@ export default function Dashboard() {
   const peakYesterdayH = yesterdayPeak.hour;
   const peakYesterdayM = yesterdayPeak.minute;
 
-  // 그래프 상태
-  // Pie
-  const [chatKindData, setChatKindData] = useState<
-    Array<{ title: string; value: number; lastUpdate?: string }>
-  >([]);
-  // Line
-  const [chatCountData, setChatCountData] = useState<
-    Array<{ x: Date; y: number }>
-  >([]);
-  const [maxY, setMaxY] = useState(0);
-  const [peakPoint, setPeakPoint] = useState<{ x: Date; y: number } | null>(
-    null
-  );
-  // Top 10
-  const [userChatCountData, setUserChatCountData] = useState<
-    Array<{ name: string; count: number }>
-  >([]);
-
-  // 새로 추가: 치즈 랭킹 (BarChart에서 기대하는 x/y 형태)
-  const [streamerDonationData, setStreamerDonationData] = useState<
-    Array<{ x: string; y: number }>
-  >([]);
-  const [userDonationData, setUserDonationData] = useState<
-    Array<{ x: string; y: number }>
-  >([]);
-
   const today = useMemo(todayKST, []);
+
+  // 그래프 상태
+  // Pie - 채팅 유형 분포 더미 데이터
+  const chatKindData = [
+    {
+      title: "채팅",
+      value: 45,
+      lastUpdate: new Date().toLocaleString("ko-KR"),
+    },
+    {
+      title: "후원",
+      value: 25,
+      lastUpdate: new Date().toLocaleString("ko-KR"),
+    },
+    {
+      title: "블라인드",
+      value: 30,
+      lastUpdate: new Date().toLocaleString("ko-KR"),
+    },
+  ];
+  // Line - 시간대별 채팅 수 더미 데이터
+  const chatCountData = [
+    { x: new Date(`${today}T00:00:00+09:00`), y: 40 },
+    { x: new Date(`${today}T01:00:00+09:00`), y: 60 },
+    { x: new Date(`${today}T02:00:00+09:00`), y: 80 },
+    { x: new Date(`${today}T03:00:00+09:00`), y: 150 },
+    { x: new Date(`${today}T04:00:00+09:00`), y: 210 },
+    { x: new Date(`${today}T05:00:00+09:00`), y: 300 },
+    { x: new Date(`${today}T06:00:00+09:00`), y: 420 },
+    { x: new Date(`${today}T07:00:00+09:00`), y: 470 },
+    { x: new Date(`${today}T08:00:00+09:00`), y: 380 },
+    { x: new Date(`${today}T09:00:00+09:00`), y: 350 },
+    { x: new Date(`${today}T10:00:00+09:00`), y: 300 },
+    { x: new Date(`${today}T11:00:00+09:00`), y: 250 },
+    { x: new Date(`${today}T12:00:00+09:00`), y: 280 },
+    { x: new Date(`${today}T13:00:00+09:00`), y: 320 },
+    { x: new Date(`${today}T14:00:00+09:00`), y: 400 },
+    { x: new Date(`${today}T15:00:00+09:00`), y: 450 },
+    { x: new Date(`${today}T16:00:00+09:00`), y: 490 },
+    { x: new Date(`${today}T17:00:00+09:00`), y: 410 },
+    { x: new Date(`${today}T18:00:00+09:00`), y: 380 },
+    { x: new Date(`${today}T19:00:00+09:00`), y: 300 },
+    { x: new Date(`${today}T20:00:00+09:00`), y: 200 },
+    { x: new Date(`${today}T21:00:00+09:00`), y: 100 },
+    { x: new Date(`${today}T22:00:00+09:00`), y: 80 },
+    { x: new Date(`${today}T23:00:00+09:00`), y: 50 },
+  ];
+
+  const maxY = Math.max(...chatCountData.map((d) => d.y));
+  const peakPoint = chatCountData.reduce(
+    (max, d) => (d.y > max.y ? d : max),
+    chatCountData[0]
+  );
+
+  // Top 10 - 사용자 채팅 랭킹 더미 데이터
+  const userChatCountData = [
+    { name: "치지직이", count: 6800 },
+    { name: "악플러123", count: 5400 },
+    { name: "고양이짱", count: 3600 },
+    { name: "채팅봇", count: 2000 },
+    { name: "시청자1", count: 1200 },
+    { name: "사랑해요BJ", count: 500 },
+    { name: "스누피", count: 450 },
+    { name: "배추도사", count: 300 },
+    { name: "히히123", count: 180 },
+    { name: "무야호", count: 100 },
+  ];
+
+  // 치즈 랭킹 더미 데이터
+  const streamerDonationData = [
+    { x: "쏘쿨BJ", y: 8500 },
+    { x: "도라BJ", y: 6200 },
+    { x: "고양이BJ", y: 5800 },
+    { x: "치지직왕", y: 4100 },
+    { x: "노래하는형", y: 3500 },
+  ];
+
+  const userDonationData = [
+    { x: "기부왕123", y: 10000 },
+    { x: "후원봇", y: 8300 },
+    { x: "팬클럽1호", y: 7000 },
+    { x: "닉네임김치", y: 6400 },
+    { x: "익명기부", y: 5000 },
+  ];
 
   const todayAtKST = (h: number, m: number, s: number = 0) =>
     new Date(
