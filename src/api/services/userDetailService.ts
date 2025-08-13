@@ -48,68 +48,98 @@ export interface AnalyzeLambdaResp {
   message?: string;
 }
 
+// Swagger 기반 사용자 상세 타입들
+export interface UserAnalysis {
+  persona?: Array<{ text: string; value: number }>;
+  wordCloud?: WordCloudItem[];
+  frequentWords?: Array<{ word: string; count: number; percentage?: number }>;
+}
+
+export interface UserWordFrequencyItem {
+  word: string;
+  count: number;
+  percentage?: number;
+}
+
+export interface UserChatTypeDistributionItem {
+  type: string; // "text" | "emote" | "donation" 등
+  count: number;
+  percentage?: number;
+}
+
+export interface WatchedStreamerItem {
+  name: string;
+  count: number;
+  percentage?: number;
+}
+
 export const userDetailService = {
-  async getChatKinds(
-    nickname: string,
-    startDate: string,
-    endDate: string
-  ): Promise<ApiResponse<ChatKindsItem[]>> {
-    const endpoint = `/user/chat-kinds?nickname=${encodeURIComponent(
-      nickname
-    )}&start=${startDate}&end=${endDate}`;
-    return apiClient.get<ChatKindsItem[]>(endpoint);
+  // 기존 별칭 기반 API들은 유지하되, 신규 userId 기반 엔드포인트 추가
+  async getUserAnalysis(
+    userId: string,
+    params?: { start?: string; end?: string }
+  ): Promise<ApiResponse<UserAnalysis>> {
+    const qs = new URLSearchParams();
+    if (params?.start) qs.set("start", params.start);
+    if (params?.end) qs.set("end", params.end);
+    const endpoint = qs.toString()
+      ? `/user/${encodeURIComponent(userId)}/analysis?${qs}`
+      : `/user/${encodeURIComponent(userId)}/analysis`;
+    return apiClient.get<UserAnalysis>(endpoint);
   },
 
-  async getTopStreamers(
-    nickname: string,
-    startDate: string,
-    endDate: string
-  ): Promise<ApiResponse<TopStreamersItem[]>> {
-    const endpoint = `/user/top-streamers?nickname=${encodeURIComponent(
-      nickname
-    )}&start=${startDate}&end=${endDate}`;
-    return apiClient.get<TopStreamersItem[]>(endpoint);
+  async getUserWordFrequency(
+    userId: string,
+    params?: { start?: string; end?: string; topN?: number }
+  ): Promise<ApiResponse<UserWordFrequencyItem[]>> {
+    const qs = new URLSearchParams();
+    if (params?.start) qs.set("start", params.start);
+    if (params?.end) qs.set("end", params.end);
+    if (typeof params?.topN === "number") qs.set("topN", String(params.topN));
+    const endpoint = qs.toString()
+      ? `/user/${encodeURIComponent(userId)}/word-frequency?${qs}`
+      : `/user/${encodeURIComponent(userId)}/word-frequency`;
+    return apiClient.get<UserWordFrequencyItem[]>(endpoint);
   },
 
-  async getChatHistory(
-    nickname: string,
-    startDate: string,
-    endDate: string
+  async getUserChatHistory(
+    userId: string,
+    params?: { start?: string; end?: string; channelId?: string }
   ): Promise<ApiResponse<ChatMessage[]>> {
-    const endpoint = `/user/chat-history?nickname=${encodeURIComponent(
-      nickname
-    )}&start=${startDate}&end=${endDate}`;
+    const qs = new URLSearchParams();
+    if (params?.start) qs.set("start", params.start);
+    if (params?.end) qs.set("end", params.end);
+    if (params?.channelId) qs.set("channelId", params.channelId);
+    const endpoint = qs.toString()
+      ? `/user/${encodeURIComponent(userId)}/chat-history?${qs}`
+      : `/user/${encodeURIComponent(userId)}/chat-history`;
     return apiClient.get<ChatMessage[]>(endpoint);
   },
 
-  async analyzeUser(
-    nickname: string,
-    startDate: string,
-    endDate: string,
-    lambdaUrl?: string
-  ): Promise<AnalyzeLambdaResp> {
-    if (!lambdaUrl) {
-      throw new Error("Lambda 분석 URL이 설정되지 않았습니다.");
-    }
+  async getUserChatType(
+    userId: string,
+    params?: { start?: string; end?: string }
+  ): Promise<ApiResponse<UserChatTypeDistributionItem[]>> {
+    const qs = new URLSearchParams();
+    if (params?.start) qs.set("start", params.start);
+    if (params?.end) qs.set("end", params.end);
+    const endpoint = qs.toString()
+      ? `/user/${encodeURIComponent(userId)}/chat-type?${qs}`
+      : `/user/${encodeURIComponent(userId)}/chat-type`;
+    return apiClient.get<UserChatTypeDistributionItem[]>(endpoint);
+  },
 
-    const response = await fetch(lambdaUrl, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        nickname,
-        startDate,
-        endDate,
-        tasks: ["wordCloud", "frequentWords", "persona"],
-        topN: 10,
-        maxItems: 60,
-        excludeEmotes: true,
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Lambda 분석 요청 실패: ${response.status}`);
-    }
-
-    return response.json();
+  async getUserWatchedStreamers(
+    userId: string,
+    params?: { start?: string; end?: string; topN?: number }
+  ): Promise<ApiResponse<WatchedStreamerItem[]>> {
+    const qs = new URLSearchParams();
+    if (params?.start) qs.set("start", params.start);
+    if (params?.end) qs.set("end", params.end);
+    if (typeof params?.topN === "number") qs.set("topN", String(params.topN));
+    const endpoint = qs.toString()
+      ? `/user/${encodeURIComponent(userId)}/watched-streamers?${qs}`
+      : `/user/${encodeURIComponent(userId)}/watched-streamers`;
+    return apiClient.get<WatchedStreamerItem[]>(endpoint);
   },
 };

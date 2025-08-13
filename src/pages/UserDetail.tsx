@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import {
   Box,
   Container,
@@ -15,12 +15,18 @@ import type { DateRangePickerProps } from "@cloudscape-design/components";
 import ReactWordCloud from "react-d3-cloud";
 import ChatBubble from "@cloudscape-design/chat-components/chat-bubble";
 import Avatar from "@cloudscape-design/chat-components/avatar";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import NotFoundUser from "./NotFoundUser";
+import { useApi } from "../api/hooks";
+import { userDetailService } from "../api/services";
 import type {
   ChatMessage,
   WordCloudItem,
   FreqWordItem,
+  UserAnalysis,
+  UserWordFrequencyItem,
+  UserChatTypeDistributionItem,
+  WatchedStreamerItem,
 } from "../api/services/userDetailService";
 
 /** ===== helpers ===== */
@@ -55,6 +61,9 @@ const getRankBadge = (rank: number) => {
 const UserDetail: React.FC = () => {
   const { nickname = "" } = useParams<{ nickname: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const userIdHash = searchParams.get("userIdHash") || undefined;
+
   const [searchValue, setSearchValue] = useState("");
   const [isSearching, setIsSearching] = useState(false);
 
@@ -72,96 +81,292 @@ const UserDetail: React.FC = () => {
   /** 유저 존재 여부 */
   const userFound = !!nickname;
 
-  /** 더미 데이터 */
-  const wordCloudData: WordCloudItem[] = [
-    { text: "안녕하세요", value: 50 },
-    { text: "좋아요", value: 40 },
-    { text: "대박", value: 35 },
-    { text: "ㅋㅋㅋ", value: 30 },
-    { text: "응원", value: 25 },
-    { text: "사랑해요", value: 20 },
-    { text: "최고", value: 18 },
-    { text: "화이팅", value: 15 },
-    { text: "멋져요", value: 12 },
-    { text: "감사합니다", value: 10 },
-  ];
+  const { start, end } = useMemo(() => {
+    if (range && range.type === "absolute") {
+      return {
+        start: range.startDate || undefined,
+        end: range.endDate || undefined,
+      };
+    }
+    return { start: undefined, end: undefined };
+  }, [range]);
 
-  const freqWords: FreqWordItem[] = [
-    { rank: 1, word: "안녕하세요", count: 150, percentage: 25 },
-    { rank: 2, word: "좋아요", count: 120, percentage: 20 },
-    { rank: 3, word: "대박", count: 90, percentage: 15 },
-  ];
+  // API calls using userIdHash
+  const analysisApiCall = useCallback(() => {
+    if (!userIdHash) throw new Error("userIdHash is required");
+    return userDetailService.getUserAnalysis(userIdHash, { start, end });
+  }, [userIdHash, start, end]);
 
-  const chatKindsData = [
-    { title: "일반 채팅", value: 1500, lastUpdate: "2024-01-15" },
-    { title: "이모티콘", value: 800, lastUpdate: "2024-01-15" },
-    { title: "후원", value: 300, lastUpdate: "2024-01-15" },
-  ];
+  const wordFreqApiCall = useCallback(() => {
+    if (!userIdHash) throw new Error("userIdHash is required");
+    return userDetailService.getUserWordFrequency(userIdHash, {
+      start,
+      end,
+      topN: 3,
+    });
+  }, [userIdHash, start, end]);
 
-  const topStreamersData = [
-    { name: "치지직이", count: 450, percentage: 45 },
-    { name: "고양이짱", count: 320, percentage: 32 },
-    { name: "악플러123", count: 230, percentage: 23 },
-  ];
+  const chatHistoryApiCall = useCallback(() => {
+    if (!userIdHash) throw new Error("userIdHash is required");
+    return userDetailService.getUserChatHistory(userIdHash, { start, end });
+  }, [userIdHash, start, end]);
 
-  const chatHistoryData: ChatMessage[] = [
-    {
-      id: "1",
-      nickname: nickname,
-      channelId: "channel1",
-      channelName: "치지직이",
-      message: "안녕하세요! 오늘도 좋은 방송 감사합니다 😊",
-      messageType: "text",
-      createdAt: "2024-01-15T10:30:00Z",
-    },
-    {
-      id: "2",
-      nickname: nickname,
-      channelId: "channel1",
-      channelName: "치지직이",
-      message: "대박! 정말 재미있어요",
-      messageType: "text",
-      createdAt: "2024-01-15T10:25:00Z",
-    },
-    {
-      id: "3",
-      nickname: nickname,
-      channelId: "channel2",
-      channelName: "고양이짱",
-      message: "고양이 너무 귀여워요 🐱",
-      messageType: "text",
-      createdAt: "2024-01-15T09:15:00Z",
-    },
-    {
-      id: "4",
-      nickname: nickname,
-      channelId: "channel2",
-      channelName: "고양이짱",
-      message: "사랑해요!",
-      messageType: "text",
-      createdAt: "2024-01-15T09:10:00Z",
-    },
-    {
-      id: "5",
-      nickname: nickname,
-      channelId: "channel3",
-      channelName: "악플러123",
-      message: "화이팅!",
-      messageType: "text",
-      createdAt: "2024-01-15T08:45:00Z",
-    },
-  ];
+  const chatTypeApiCall = useCallback(() => {
+    if (!userIdHash) throw new Error("userIdHash is required");
+    return userDetailService.getUserChatType(userIdHash, { start, end });
+  }, [userIdHash, start, end]);
+
+  const watchedStreamersApiCall = useCallback(() => {
+    if (!userIdHash) throw new Error("userIdHash is required");
+    return userDetailService.getUserWatchedStreamers(userIdHash, {
+      start,
+      end,
+      topN: 10,
+    });
+  }, [userIdHash, start, end]);
+
+  const { data: analysisData, loading: analysisLoading } = useApi<UserAnalysis>(
+    analysisApiCall,
+    [analysisApiCall]
+  );
+  const { data: wordFreqData, loading: wordFreqLoading } = useApi<
+    UserWordFrequencyItem[]
+  >(wordFreqApiCall, [wordFreqApiCall]);
+  const { data: chatHistoryApiData } = useApi<ChatMessage[]>(
+    chatHistoryApiCall,
+    [chatHistoryApiCall]
+  );
+  const { data: chatTypeData, loading: chatTypeLoading } = useApi<
+    UserChatTypeDistributionItem[]
+  >(chatTypeApiCall, [chatTypeApiCall]);
+  const { data: watchedStreamersData, loading: watchedStreamersLoading } =
+    useApi<WatchedStreamerItem[]>(watchedStreamersApiCall, [
+      watchedStreamersApiCall,
+    ]);
+
+  /** 데이터 변환 (배열 가드) */
+  const wordCloudData: WordCloudItem[] = useMemo(() => {
+    return Array.isArray(analysisData?.wordCloud)
+      ? analysisData!.wordCloud!
+      : [];
+  }, [analysisData]);
+
+  const freqWords: FreqWordItem[] = useMemo(() => {
+    if (Array.isArray(wordFreqData)) {
+      return wordFreqData.map((item, idx) => {
+        const asAny = item as unknown as {
+          count?: number;
+          frequency?: number;
+          percentage?: number;
+          word: string;
+        };
+        const countValue =
+          typeof asAny.count === "number"
+            ? asAny.count
+            : typeof asAny.frequency === "number"
+            ? asAny.frequency
+            : 0;
+        const percentageValue =
+          typeof asAny.percentage === "number" ? asAny.percentage : 0;
+        return {
+          rank: idx + 1,
+          word: asAny.word,
+          count: countValue,
+          percentage: Math.round(percentageValue * 100) / 100,
+        };
+      });
+    }
+
+    type WordFrequencyApiResponse = {
+      data?: {
+        words?: Array<{ word: string; frequency: number; length?: number }>;
+        totalWords?: number;
+      };
+    } | null;
+
+    const resp: WordFrequencyApiResponse =
+      wordFreqData as unknown as WordFrequencyApiResponse;
+    const words = resp?.data?.words || [];
+    const total = resp?.data?.totalWords || 0;
+
+    return words.slice(0, 3).map((w, idx) => ({
+      rank: idx + 1,
+      word: w.word,
+      count: w.frequency,
+      percentage:
+        total > 0 ? Math.round((w.frequency / total) * 100 * 100) / 100 : 0,
+    }));
+  }, [wordFreqData]);
+
+  const chatKindsData = useMemo(() => {
+    type TypeCount = { type: string; count: number };
+
+    const normalize = (input: unknown): TypeCount[] => {
+      if (Array.isArray(input)) {
+        return (input as Array<{ type?: string; count?: number }>).map((i) => ({
+          type: String(i.type ?? "unknown"),
+          count: typeof i.count === "number" ? i.count : 0,
+        }));
+      }
+
+      const obj = input as { data?: unknown } | null;
+      const data = (obj?.data ?? undefined) as
+        | {
+            types?: Array<{ type?: string; count?: number }>;
+            distribution?:
+              | Record<string, number>
+              | Record<string, { count?: number; percentage?: number }>;
+            chatTypes?:
+              | Record<string, number>
+              | Record<string, { count?: number; percentage?: number }>;
+          }
+        | undefined;
+
+      // case: data.types as array
+      if (Array.isArray(data?.types)) {
+        return (data!.types as Array<{ type?: string; count?: number }>).map(
+          (i) => ({
+            type: String(i.type ?? "unknown"),
+            count: typeof i.count === "number" ? i.count : 0,
+          })
+        );
+      }
+
+      // case: data.distribution as object
+      const distUnknown = data?.distribution as unknown;
+      if (distUnknown && typeof distUnknown === "object") {
+        const distObj = distUnknown as Record<string, unknown>;
+        const results: TypeCount[] = [];
+        for (const key of Object.keys(distObj)) {
+          const val = distObj[key];
+          let count = 0;
+          if (typeof val === "number") {
+            count = val;
+          } else if (
+            val && typeof (val as { count?: number }).count === "number"
+          ) {
+            count = (val as { count?: number }).count as number;
+          }
+          results.push({ type: key, count });
+        }
+        if (results.length > 0) return results;
+      }
+
+      // case: data.chatTypes as object
+      const chatTypesUnknown = data?.chatTypes as unknown;
+      if (chatTypesUnknown && typeof chatTypesUnknown === "object") {
+        const ctObj = chatTypesUnknown as Record<string, unknown>;
+        const results: TypeCount[] = [];
+        for (const key of Object.keys(ctObj)) {
+          const val = ctObj[key];
+          let count = 0;
+          if (typeof val === "number") {
+            count = val;
+          } else if (
+            val && typeof (val as { count?: number }).count === "number"
+          ) {
+            count = (val as { count?: number }).count as number;
+          }
+          results.push({ type: key, count });
+        }
+        if (results.length > 0) return results;
+      }
+
+      // case: data has flat numeric keys (chat, blind, donation, total)
+      if (data && typeof data === "object") {
+        const flat = data as Record<string, unknown>;
+        const results: TypeCount[] = [];
+        for (const key of Object.keys(flat)) {
+          if (
+            key === "total" ||
+            key === "date" ||
+            key === "userId" ||
+            key === "timestamp"
+          )
+            continue;
+          const val = flat[key];
+          if (typeof val === "number") {
+            results.push({ type: key, count: val });
+          } else if (
+            val &&
+            typeof (val as { count?: number }).count === "number"
+          ) {
+            results.push({
+              type: key,
+              count: (val as { count?: number }).count as number,
+            });
+          }
+        }
+        if (results.length > 0) return results;
+      }
+
+      // case: top-level chatTypes object
+      if (obj && typeof obj === "object") {
+        const topChatTypes = (obj as Record<string, unknown>)[
+          "chatTypes"
+        ] as unknown;
+        if (topChatTypes && typeof topChatTypes === "object") {
+          const ctObj = topChatTypes as Record<string, unknown>;
+          const results: TypeCount[] = [];
+          for (const key of Object.keys(ctObj)) {
+            const val = ctObj[key];
+            let count = 0;
+            if (typeof val === "number") {
+              count = val;
+            } else if (
+              val && typeof (val as { count?: number }).count === "number"
+            ) {
+              count = (val as { count?: number }).count as number;
+            }
+            results.push({ type: key, count });
+          }
+          if (results.length > 0) return results;
+        }
+      }
+
+      return [];
+    };
+
+    const TYPE_LABELS: Record<string, string> = {
+      chat: "채팅",
+      blind: "채팅제한",
+      donation: "후원",
+    };
+
+    const items = normalize(chatTypeData);
+    return items.map((i) => ({
+      title: TYPE_LABELS[i.type.toLowerCase()] ?? i.type,
+      value: i.count,
+      lastUpdate: undefined as string | undefined,
+    }));
+  }, [chatTypeData]);
+
+  const topStreamersData = useMemo(() => {
+    const items = Array.isArray(watchedStreamersData)
+      ? watchedStreamersData
+      : [];
+    return items
+      .slice(0, 3)
+      .map((i) => ({ name: i.name, count: i.count, percentage: i.percentage }));
+  }, [watchedStreamersData]);
+
+  const chatHistoryData: ChatMessage[] = useMemo(() => {
+    if (Array.isArray(chatHistoryApiData)) return chatHistoryApiData;
+    const maybeObj = chatHistoryApiData as unknown as {
+      messages?: ChatMessage[];
+    } | null;
+    const messages =
+      maybeObj && Array.isArray(maybeObj.messages) ? maybeObj.messages : [];
+    return messages;
+  }, [chatHistoryApiData]);
 
   /** 로딩 상태 */
-  const loading = false;
+  // 섹션별 로딩 플래그 사용
 
-  // 검색 처리 (더미 데이터 사용)
+  // 검색 처리 (더미 데이터 사용 그대로 유지)
   const handleSearch = () => {
     if (!searchValue.trim()) return;
-
     setIsSearching(true);
-
-    // 실제 API가 없으므로 더미 데이터로 테스트
     setTimeout(() => {
       const dummyUsers = [
         {
@@ -186,32 +391,28 @@ const UserDetail: React.FC = () => {
           updatedAt: "2024-01-03T00:00:00Z",
         },
       ];
-
       const filteredUsers = dummyUsers.filter(
         (user) =>
           user.name.toLowerCase().includes(searchValue.toLowerCase()) ||
           user.id.toLowerCase().includes(searchValue.toLowerCase())
       );
-
       const dummyResult = {
         userIdHashes: filteredUsers.map((user) => user.id),
         users: filteredUsers,
-      };
-
-      // 여러 유저가 있으면 선택 페이지로, 1명이면 바로 상세 페이지로
+      } as { userIdHashes: string[]; users: { name: string }[] };
       if (dummyResult.users.length > 1) {
         navigate("/user-select", {
           state: {
-            users: dummyResult.users,
+            users: filteredUsers,
             userIdHashes: dummyResult.userIdHashes,
             searchTerm: searchValue,
           },
         });
       } else if (dummyResult.users.length === 1) {
-        navigate(`/user/${dummyResult.users[0].name}`);
+        navigate(`/user/${filteredUsers[0].name}`);
       }
       setIsSearching(false);
-    }, 500); // 로딩 효과를 위한 지연
+    }, 500);
   };
 
   const handleKeyDown = (event: CustomEvent<{ key: string }>) => {
@@ -313,6 +514,7 @@ const UserDetail: React.FC = () => {
           <Box>
             <Header variant="h1">
               🤖 [{nickname}] 유저의 채팅을 분석한 내용입니다.{" "}
+              {userIdHash ? `(hash: ${userIdHash})` : ""}
               <Box
                 display="inline"
                 fontSize="heading-m"
@@ -351,16 +553,16 @@ const UserDetail: React.FC = () => {
         <Grid
           gridDefinition={[
             { colspan: 7 },
-            { colspan: 5 }, // 1행
+            { colspan: 5 },
             { colspan: 7 },
-            { colspan: 5 }, // 2행
+            { colspan: 5 },
           ]}
         >
           {/* 사용자 분석(WordCloud) */}
           <Container fitHeight header={<Header>사용자 분석</Header>}>
             <Box>
               <ReactWordCloud data={wordCloudData} width={400} height={400} />
-              {!loading && wordCloudData.length === 0 && (
+              {!analysisLoading && wordCloudData.length === 0 && (
                 <Box margin={{ top: "s" }} color="text-body-secondary">
                   데이터가 없습니다.
                 </Box>
@@ -368,7 +570,7 @@ const UserDetail: React.FC = () => {
             </Box>
           </Container>
 
-          {/* 많이 쓴 단어 Top N (Lambda) */}
+          {/* 많이 쓴 단어 Top N */}
           <Container
             fitHeight
             header={<Header variant="h2">💬 많이 쓴 단어 Top 3</Header>}
@@ -406,7 +608,7 @@ const UserDetail: React.FC = () => {
                     </Grid>
                   </Box>
                 ))}
-                {!loading && freqWords.length === 0 && (
+                {!wordFreqLoading && freqWords.length === 0 && (
                   <Box margin={{ top: "s" }} color="text-body-secondary">
                     데이터가 없습니다.
                   </Box>
@@ -437,7 +639,7 @@ const UserDetail: React.FC = () => {
               }
               hideFilter
             />
-            {!loading && chatKindsData.length === 0 && (
+            {!chatTypeLoading && chatKindsData.length === 0 && (
               <Box margin={{ top: "s" }} color="text-body-secondary">
                 데이터가 없습니다.
               </Box>
@@ -473,7 +675,7 @@ const UserDetail: React.FC = () => {
                     </Grid>
                   </Box>
                 ))}
-                {!loading && topStreamersData.length === 0 && (
+                {!watchedStreamersLoading && topStreamersData.length === 0 && (
                   <Box margin={{ top: "s" }} color="text-body-secondary">
                     데이터가 없습니다.
                   </Box>
@@ -536,7 +738,6 @@ const UserDetail: React.FC = () => {
                           valid: false,
                           errorMessage: "날짜 범위를 선택하세요.",
                         };
-
                       if (r.type === "absolute") {
                         if (!r.startDate || !r.endDate) {
                           return {
@@ -551,7 +752,6 @@ const UserDetail: React.FC = () => {
                               "시작일이 종료일보다 이전이어야 합니다.",
                           };
                         }
-                        // ✅ 미래 날짜 방지
                         const today = new Date();
                         if (
                           new Date(r.startDate) > today ||
@@ -564,34 +764,24 @@ const UserDetail: React.FC = () => {
                         }
                         return { valid: true };
                       }
-
-                      // ✅ relative 타입 검증
                       if (r.type === "relative") {
-                        // amount > 0 이어야 하고 unit(day|week|month|year 등) 필요
-                        // (Cloudscape 내부에서 실제 날짜 계산은 컴포넌트가 처리)
-                        const relativeRange = r as {
-                          amount: number;
-                          unit: string;
-                        };
+                        const rel = r as { amount: number; unit: string };
                         const ok =
-                          typeof relativeRange.amount === "number" &&
-                          relativeRange.amount > 0 &&
-                          !!relativeRange.unit;
+                          typeof rel.amount === "number" &&
+                          rel.amount > 0 &&
+                          !!rel.unit;
                         return ok
                           ? { valid: true }
                           : {
                               valid: false,
-                              errorMessage:
-                                "상대 범위(기간/단위)를 올바르게 선택하세요.",
+                              errorMessage: "상대 범위를 올바르게 선택하세요.",
                             };
                       }
-
                       return {
                         valid: false,
                         errorMessage: "유효하지 않은 범위 형식입니다.",
                       };
                     }}
-                    // ✅ 미래 날짜 비활성화
                     isDateEnabled={(date) => {
                       const today = new Date();
                       today.setHours(0, 0, 0, 0);
