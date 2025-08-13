@@ -16,6 +16,7 @@ import {
 import type { FlashbarProps } from "@cloudscape-design/components";
 import { useApi } from "../api/hooks";
 import { dashboardService } from "../api/services";
+import type { DashboardOverview } from "../api/services/dashboardService";
 
 type SummaryResponse = {
   success: boolean;
@@ -169,19 +170,35 @@ export default function Dashboard() {
     },
   ]);
 
-  // 상단 3카드 상태
-  const [loading, setLoading] = useState(true);
-  const [err, setErr] = useState<string | null>(null);
+  // 상단 3카드 상태 - 새로운 API 사용
+  const {
+    data: overviewData,
+    loading,
+    error,
+  } = useApi<DashboardOverview>(
+    () => dashboardService.getDashboardOverview(),
+    []
+  );
 
-  const [totalToday, setTotalToday] = useState(0);
-  const [totalDelta, setTotalDelta] = useState(0);
+  // 실제 API 응답 구조에 맞게 데이터 추출
+  const totalToday = overviewData?.data?.todayChatCount ?? 0;
+  const totalDelta = overviewData?.data?.todayChatCountChange ?? 0;
+  const donToday = overviewData?.data?.todayCheeseCount ?? 0;
+  const donDelta = overviewData?.data?.todayCheeseCountChange ?? 0;
 
-  const [donToday, setDonToday] = useState(0);
-  const [donDelta, setDonDelta] = useState(0);
+  // 시간 문자열을 파싱 (예: "12:00" -> 12, 0)
+  const parseTimeString = (timeStr: string | undefined) => {
+    if (!timeStr) return { hour: null, minute: 0 };
+    const [hour, minute] = timeStr.split(":").map(Number);
+    return { hour, minute };
+  };
 
-  const [peakToday, setPeakToday] = useState<number | null>(null);
-  const [peakYesterdayH, setPeakYesterdayH] = useState<number | null>(null);
-  const [peakYesterdayM, setPeakYesterdayM] = useState<number | null>(0);
+  const todayPeak = parseTimeString(overviewData?.data?.todayPeakTime);
+  const yesterdayPeak = parseTimeString(overviewData?.data?.yesterdayPeakTime);
+
+  const peakToday = todayPeak.hour;
+  const peakYesterdayH = yesterdayPeak.hour;
+  const peakYesterdayM = yesterdayPeak.minute;
 
   // 그래프 상태
   // Pie
@@ -219,51 +236,8 @@ export default function Dashboard() {
       )}:${String(s).padStart(2, "0")}+09:00`
     );
 
-  useEffect(() => {
-    const ac = new AbortController();
-    (async () => {
-      setLoading(true);
-      setErr(null);
-      try {
-        const res = await fetch(ENDPOINTS.summary(today), {
-          signal: ac.signal,
-        });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const json: SummaryResponse = await res.json();
-        console.log("[SummaryResponse]", json);
-
-        if (!json?.success)
-          throw new Error(json?.message || "요약 데이터 수신 실패");
-
-        // 상단 3카드
-        const { totals, donations, peaks } = json.data;
-        setTotalToday(totals.todayCount ?? 0);
-        setTotalDelta(totals.deltaPercent ?? 0);
-        setDonToday(donations.todayCount ?? 0);
-        setDonDelta(donations.deltaPercent ?? 0);
-        setPeakToday(peaks.todayHour ?? null);
-        setPeakYesterdayH(peaks.yesterdayHour ?? null);
-        setPeakYesterdayM(peaks.yesterdayMinute ?? 0);
-
-        // 그래프 섹션
-        setChatKindData(mapPieDataFromSummary(json));
-        const { line, maxY, peakPoint } = mapHourlyLineFromSummary(today, json);
-        setChatCountData(line);
-        setMaxY(maxY);
-        setPeakPoint(peakPoint);
-        setUserChatCountData(mapTopChattersFromSummary(json));
-
-        // 치즈 랭킹 섹션 (이번에 API로 치환)
-        setStreamerDonationData(mapStreamerDonationsFromSummary(json));
-        setUserDonationData(mapTopDonorsFromSummary(json));
-      } catch (e: any) {
-        setErr(e?.message ?? "데이터 로드 실패");
-      } finally {
-        setLoading(false);
-      }
-    })();
-    return () => ac.abort();
-  }, [today]);
+  // 에러 처리
+  const err = error?.message ?? null;
 
   // 상단 3카드 뱃지 색깔
   const totalBadge = badgeFromDelta(totalDelta);
@@ -387,12 +361,24 @@ export default function Dashboard() {
           header={<Header variant="h2">💤 오늘의 누적 채팅수</Header>}
         >
           <SpaceBetween size="s">
-            <Box fontSize="display-l" fontWeight="bold">
-              {fmtNumber(totalToday)}
-            </Box>
-            <Badge color={totalBadge.color}>
-              {totalBadge.arrow} {totalBadge.pct}%{/* ▲ 12% */}
-            </Badge>
+            {loading ? (
+              <Box textAlign="center" padding="xl">
+                로딩 중...
+              </Box>
+            ) : error ? (
+              <Box textAlign="center" padding="xl" color="text-status-error">
+                오류: {err}
+              </Box>
+            ) : (
+              <>
+                <Box fontSize="display-l" fontWeight="bold">
+                  {fmtNumber(totalToday)}
+                </Box>
+                <Badge color={totalBadge.color}>
+                  {totalBadge.arrow} {totalBadge.pct}%
+                </Badge>
+              </>
+            )}
           </SpaceBetween>
         </Container>
         <Container
@@ -400,12 +386,24 @@ export default function Dashboard() {
           header={<Header variant="h2">🧀 오늘의 치즈</Header>}
         >
           <SpaceBetween size="s">
-            <Box fontSize="display-l" fontWeight="bold">
-              {fmtNumber(donToday)}
-            </Box>
-            <Badge color={donBadge.color}>
-              {donBadge.arrow} {donBadge.pct}%
-            </Badge>
+            {loading ? (
+              <Box textAlign="center" padding="xl">
+                로딩 중...
+              </Box>
+            ) : error ? (
+              <Box textAlign="center" padding="xl" color="text-status-error">
+                오류: {err}
+              </Box>
+            ) : (
+              <>
+                <Box fontSize="display-l" fontWeight="bold">
+                  {fmtNumber(donToday)}
+                </Box>
+                <Badge color={donBadge.color}>
+                  {donBadge.arrow} {donBadge.pct}%
+                </Badge>
+              </>
+            )}
           </SpaceBetween>
         </Container>
         <Container
@@ -413,13 +411,24 @@ export default function Dashboard() {
           header={<Header variant="h2">🕓 오늘의 피크시간</Header>}
         >
           <SpaceBetween size="s">
-            <Box fontSize="display-l" fontWeight="bold">
-              {toHHmm(peakToday)}
-              {/* 16:00 */}
-            </Box>
-            <Badge color="blue">
-              전일 {toHHmm(peakYesterdayH, peakYesterdayM ?? 0)}
-            </Badge>
+            {loading ? (
+              <Box textAlign="center" padding="xl">
+                로딩 중...
+              </Box>
+            ) : error ? (
+              <Box textAlign="center" padding="xl" color="text-status-error">
+                오류: {err}
+              </Box>
+            ) : (
+              <>
+                <Box fontSize="display-l" fontWeight="bold">
+                  {toHHmm(peakToday)}
+                </Box>
+                <Badge color="blue">
+                  전일 {toHHmm(peakYesterdayH, peakYesterdayM ?? 0)}
+                </Badge>
+              </>
+            )}
           </SpaceBetween>
         </Container>
       </Grid>

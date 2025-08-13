@@ -7,6 +7,19 @@ export interface DashboardStats {
   totalMessages: number;
 }
 
+export interface DashboardOverview {
+  message: string;
+  timestamp: string;
+  data: {
+    todayChatCount: number;
+    todayChatCountChange: number;
+    todayCheeseCount: number;
+    todayCheeseCountChange: number;
+    todayPeakTime: string;
+    yesterdayPeakTime: string;
+  };
+}
+
 export interface ChatData {
   id: string;
   title: string;
@@ -25,6 +38,10 @@ export interface MessageData {
 export const dashboardService = {
   async getDashboardStats(): Promise<ApiResponse<DashboardStats>> {
     return apiClient.get<DashboardStats>("/dashboard/stats");
+  },
+
+  async getDashboardOverview(): Promise<ApiResponse<DashboardOverview>> {
+    return apiClient.get<DashboardOverview>("/dashboard/overview");
   },
 
   async getRecentChats(limit: number = 10): Promise<ApiResponse<ChatData[]>> {
