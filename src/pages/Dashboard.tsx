@@ -14,14 +14,8 @@ import {
   Link,
 } from "@cloudscape-design/components";
 import type { FlashbarProps } from "@cloudscape-design/components";
-
-const API_BASE_URL =
-  (import.meta as any)?.env?.VITE_API_BASE_URL || "https://api.f-yourchat.com";
-
-const ENDPOINTS = {
-  summary: (dateYYYYMMDD: string) =>
-    `${API_BASE_URL}/dashboard/summary?date=${dateYYYYMMDD}`,
-};
+import { useApi } from "../api/hooks";
+import { dashboardService } from "../api/services";
 
 type SummaryResponse = {
   success: boolean;
