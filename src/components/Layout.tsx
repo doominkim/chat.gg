@@ -49,8 +49,12 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   };
 
   // 라우팅 헬퍼
-  const toUserDetail = (q: string) =>
-    navigate(`/user/${encodeURIComponent(q)}`);
+  const toUserDetail = (q: string, hash?: string) =>
+    navigate(
+      `/user/${encodeURIComponent(q)}${
+        hash ? `?userIdHash=${encodeURIComponent(hash)}` : ""
+      }`
+    );
   const toNotFound = (q: string) =>
     navigate(`/not-found?nickname=${encodeURIComponent(q)}`, { replace: true });
 
@@ -76,7 +80,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         toNotFound(q);
       } else if (count === 1) {
         const name = users[0]?.name || q;
-        toUserDetail(name);
+        const hash = (data.userIdHashes && data.userIdHashes[0]) || undefined;
+        toUserDetail(name, hash);
       } else {
         navigate("/user-select", {
           state: {

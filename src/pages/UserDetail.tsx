@@ -243,7 +243,8 @@ const UserDetail: React.FC = () => {
           if (typeof val === "number") {
             count = val;
           } else if (
-            val && typeof (val as { count?: number }).count === "number"
+            val &&
+            typeof (val as { count?: number }).count === "number"
           ) {
             count = (val as { count?: number }).count as number;
           }
@@ -263,7 +264,8 @@ const UserDetail: React.FC = () => {
           if (typeof val === "number") {
             count = val;
           } else if (
-            val && typeof (val as { count?: number }).count === "number"
+            val &&
+            typeof (val as { count?: number }).count === "number"
           ) {
             count = (val as { count?: number }).count as number;
           }
@@ -314,7 +316,8 @@ const UserDetail: React.FC = () => {
             if (typeof val === "number") {
               count = val;
             } else if (
-              val && typeof (val as { count?: number }).count === "number"
+              val &&
+              typeof (val as { count?: number }).count === "number"
             ) {
               count = (val as { count?: number }).count as number;
             }
@@ -409,7 +412,12 @@ const UserDetail: React.FC = () => {
           },
         });
       } else if (dummyResult.users.length === 1) {
-        navigate(`/user/${filteredUsers[0].name}`);
+        const only = filteredUsers[0];
+        navigate(
+          `/user/${encodeURIComponent(
+            only.name
+          )}?userIdHash=${encodeURIComponent(only.id)}`
+        );
       }
       setIsSearching(false);
     }, 500);

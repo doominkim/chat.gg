@@ -1,5 +1,5 @@
 // src/pages/UserList.tsx
-import React, { useState, useMemo } from "react";
+import React, { useState } from "react";
 import {
   Container,
   Header,
@@ -80,7 +80,13 @@ export default function UserList() {
           },
         });
       } else if (dummyResult.users.length === 1) {
-        navigate(`/user/${dummyResult.users[0].name}`);
+        const only = dummyResult.users[0];
+        const onlyHash = dummyResult.userIdHashes[0];
+        navigate(
+          `/user/${encodeURIComponent(only.name)}?userIdHash=${encodeURIComponent(
+            onlyHash
+          )}`
+        );
       }
       setIsSearching(false);
     }, 500); // 로딩 효과를 위한 지연
@@ -102,9 +108,7 @@ export default function UserList() {
   };
 
   // 검색 결과가 없을 때 표시할 유저 목록
-  const displayUsers = useMemo(() => {
-    return dummyUsers;
-  }, []);
+  const displayUsers = dummyUsers;
 
   return (
     <Container>
