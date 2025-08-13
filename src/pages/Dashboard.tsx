@@ -1,5 +1,5 @@
 // src/pages/Dashboard.tsx
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import {
   Container,
   Header,
@@ -16,7 +16,12 @@ import {
 import type { FlashbarProps } from "@cloudscape-design/components";
 import { useApi } from "../api/hooks";
 import { dashboardService } from "../api/services";
-import type { DashboardOverview } from "../api/services/dashboardService";
+import type {
+  DashboardOverview,
+  ChatTypeDistribution,
+  HourlyChatTypeDistribution,
+  ChatRanking,
+} from "../api/services/dashboardService";
 
 type SummaryResponse = {
   success: boolean;
@@ -170,15 +175,54 @@ export default function Dashboard() {
     },
   ]);
 
+  // API 호출 함수들을 useCallback으로 메모이제이션
+  const overviewApiCall = useCallback(
+    () => dashboardService.getDashboardOverview(),
+    []
+  );
+
+  const chatTypeApiCall = useCallback(
+    () => dashboardService.getChatTypeDistribution(),
+    []
+  );
+
+  const hourlyChatTypeApiCall = useCallback(
+    () => dashboardService.getHourlyChatTypeDistribution(),
+    []
+  );
+
+  const chatRankingApiCall = useCallback(
+    () => dashboardService.getChatRanking(),
+    []
+  );
+
   // 상단 3카드 상태 - 새로운 API 사용
   const {
     data: overviewData,
     loading,
     error,
-  } = useApi<DashboardOverview>(
-    () => dashboardService.getDashboardOverview(),
-    []
-  );
+  } = useApi<DashboardOverview>(overviewApiCall, []);
+
+  // 채팅 유형 분포 API 호출
+  const {
+    data: chatTypeData,
+    loading: chatTypeLoading,
+    error: chatTypeError,
+  } = useApi<ChatTypeDistribution>(chatTypeApiCall, []);
+
+  // 시간대별 채팅 수 API 호출
+  const {
+    data: hourlyData,
+    loading: hourlyLoading,
+    error: hourlyError,
+  } = useApi<HourlyChatTypeDistribution>(hourlyChatTypeApiCall, []);
+
+  // 실시간 채팅 랭킹 API 호출
+  const {
+    data: chatRankingData,
+    loading: chatRankingLoading,
+    error: chatRankingError,
+  } = useApi<ChatRanking>(chatRankingApiCall, []);
 
   // 실제 API 응답 구조에 맞게 데이터 추출
   const totalToday = overviewData?.data?.todayChatCount ?? 0;
@@ -203,71 +247,105 @@ export default function Dashboard() {
   const today = useMemo(todayKST, []);
 
   // 그래프 상태
-  // Pie - 채팅 유형 분포 더미 데이터
-  const chatKindData = [
-    {
-      title: "채팅",
-      value: 45,
-      lastUpdate: new Date().toLocaleString("ko-KR"),
-    },
-    {
-      title: "후원",
-      value: 25,
-      lastUpdate: new Date().toLocaleString("ko-KR"),
-    },
-    {
-      title: "블라인드",
-      value: 30,
-      lastUpdate: new Date().toLocaleString("ko-KR"),
-    },
-  ];
-  // Line - 시간대별 채팅 수 더미 데이터
-  const chatCountData = [
-    { x: new Date(`${today}T00:00:00+09:00`), y: 40 },
-    { x: new Date(`${today}T01:00:00+09:00`), y: 60 },
-    { x: new Date(`${today}T02:00:00+09:00`), y: 80 },
-    { x: new Date(`${today}T03:00:00+09:00`), y: 150 },
-    { x: new Date(`${today}T04:00:00+09:00`), y: 210 },
-    { x: new Date(`${today}T05:00:00+09:00`), y: 300 },
-    { x: new Date(`${today}T06:00:00+09:00`), y: 420 },
-    { x: new Date(`${today}T07:00:00+09:00`), y: 470 },
-    { x: new Date(`${today}T08:00:00+09:00`), y: 380 },
-    { x: new Date(`${today}T09:00:00+09:00`), y: 350 },
-    { x: new Date(`${today}T10:00:00+09:00`), y: 300 },
-    { x: new Date(`${today}T11:00:00+09:00`), y: 250 },
-    { x: new Date(`${today}T12:00:00+09:00`), y: 280 },
-    { x: new Date(`${today}T13:00:00+09:00`), y: 320 },
-    { x: new Date(`${today}T14:00:00+09:00`), y: 400 },
-    { x: new Date(`${today}T15:00:00+09:00`), y: 450 },
-    { x: new Date(`${today}T16:00:00+09:00`), y: 490 },
-    { x: new Date(`${today}T17:00:00+09:00`), y: 410 },
-    { x: new Date(`${today}T18:00:00+09:00`), y: 380 },
-    { x: new Date(`${today}T19:00:00+09:00`), y: 300 },
-    { x: new Date(`${today}T20:00:00+09:00`), y: 200 },
-    { x: new Date(`${today}T21:00:00+09:00`), y: 100 },
-    { x: new Date(`${today}T22:00:00+09:00`), y: 80 },
-    { x: new Date(`${today}T23:00:00+09:00`), y: 50 },
-  ];
+  // Pie - 채팅 유형 분포 API 데이터
+  const chatKindData = chatTypeData?.data
+    ? [
+        {
+          title: "채팅",
+          value: chatTypeData.data.distribution?.chat.count ?? 0,
+          lastUpdate: new Date().toLocaleString("ko-KR"),
+        },
+        {
+          title: "후원",
+          value: chatTypeData.data.distribution?.donation.count ?? 0,
+          lastUpdate: new Date().toLocaleString("ko-KR"),
+        },
+        {
+          title: "블라인드",
+          value: chatTypeData.data.distribution?.blind.count ?? 0,
+          lastUpdate: new Date().toLocaleString("ko-KR"),
+        },
+      ]
+    : [
+        {
+          title: "채팅",
+          value: 0,
+          lastUpdate: new Date().toLocaleString("ko-KR"),
+        },
+        {
+          title: "후원",
+          value: 0,
+          lastUpdate: new Date().toLocaleString("ko-KR"),
+        },
+        {
+          title: "블라인드",
+          value: 0,
+          lastUpdate: new Date().toLocaleString("ko-KR"),
+        },
+      ];
+  // Line - 시간대별 채팅 수 API 데이터
+  const chatCountData = hourlyData?.data?.hourlyData
+    ? hourlyData.data.hourlyData.map((item) => ({
+        x: new Date(
+          `${hourlyData.date}T${String(item.hour).padStart(2, "0")}:00:00+09:00`
+        ),
+        y: item.chatTypes.chat,
+      }))
+    : [];
 
-  const maxY = Math.max(...chatCountData.map((d) => d.y));
-  const peakPoint = chatCountData.reduce(
-    (max, d) => (d.y > max.y ? d : max),
-    chatCountData[0]
-  );
+  const blindCountData = hourlyData?.data?.hourlyData
+    ? hourlyData.data.hourlyData.map((item) => ({
+        x: new Date(
+          `${hourlyData.date}T${String(item.hour).padStart(2, "0")}:00:00+09:00`
+        ),
+        y: item.chatTypes.blind,
+      }))
+    : [];
 
-  // Top 10 - 사용자 채팅 랭킹 더미 데이터
-  const userChatCountData = [
-    { name: "치지직이", count: 6800 },
-    { name: "악플러123", count: 5400 },
-    { name: "고양이짱", count: 3600 },
-    { name: "채팅봇", count: 2000 },
-    { name: "시청자1", count: 1200 },
-    { name: "사랑해요BJ", count: 500 },
-    { name: "스누피", count: 450 },
-    { name: "배추도사", count: 300 },
-    { name: "히히123", count: 180 },
-    { name: "무야호", count: 100 },
-  ];
+  const donationCountData = hourlyData?.data?.hourlyData
+    ? hourlyData.data.hourlyData.map((item) => ({
+        x: new Date(
+          `${hourlyData.date}T${String(item.hour).padStart(2, "0")}:00:00+09:00`
+        ),
+        y: item.chatTypes.donation,
+      }))
+    : [];
+
+  // 최대값 계산 (모든 시리즈 중 최대값)
+  const allData = [...chatCountData, ...blindCountData, ...donationCountData];
+  const maxY = allData.length > 0 ? Math.max(...allData.map((d) => d.y)) : 0;
+
+  // 피크 포인트 계산
+  const peakPoint =
+    hourlyData?.data?.summary?.peakHour !== undefined
+      ? {
+          x: new Date(
+            `${hourlyData.date}T${String(
+              hourlyData.data.summary.peakHour
+            ).padStart(2, "0")}:00:00+09:00`
+          ),
+          y: hourlyData.data.summary.peakChats,
+        }
+      : null;
+
+  // Top 10 - 사용자 채팅 랭킹 API 데이터
+  const userChatCountData = chatRankingData?.ranking
+    ? chatRankingData.ranking.map((user) => ({
+        name: user.username,
+        count: user.chatCount,
+      }))
+    : [
+        { name: "치지직이", count: 6800 },
+        { name: "악플러123", count: 5400 },
+        { name: "고양이짱", count: 3600 },
+        { name: "채팅봇", count: 2000 },
+        { name: "시청자1", count: 1200 },
+        { name: "사랑해요BJ", count: 500 },
+        { name: "스누피", count: 450 },
+        { name: "배추도사", count: 300 },
+        { name: "히히123", count: 180 },
+        { name: "무야호", count: 100 },
+      ];
 
   // 치즈 랭킹 더미 데이터
   const streamerDonationData = [
@@ -311,10 +389,15 @@ export default function Dashboard() {
   const roundUp = (v: number, step: number) =>
     Math.max(step, Math.ceil(v / step) * step);
 
-  // LineChart threshold 시리즈(피크 있을 때만)
-  const thresholdSeries = peakPoint
-    ? [{ title: "피크 시간대", type: "threshold" as const, x: peakPoint.x }]
-    : [];
+  // LineChart 시리즈 구성 (채팅, 블라인드, 후원, 피크 시간대)
+  const lineChartSeries = [
+    { title: "채팅", type: "line" as const, data: chatCountData },
+    { title: "블라인드", type: "line" as const, data: blindCountData },
+    { title: "후원", type: "line" as const, data: donationCountData },
+    ...(peakPoint
+      ? [{ title: "피크 시간대", type: "threshold" as const, x: peakPoint.x }]
+      : []),
+  ];
 
   // 고정 차트용 더미 데이터 (백엔드 붙이면 교체)
   // 채팅 카테고리 데이터 (PieChart)
@@ -497,57 +580,80 @@ export default function Dashboard() {
           fitHeight
           header={<Header variant="h2">📊 채팅 유형 분포</Header>}
         >
-          <PieChart
-            data={chatKindData}
-            ariaLabel="Pie chart"
-            ariaDescription="Chat categories"
-            detailPopoverContent={(datum, sum) => [
-              { key: "Resource count", value: datum.value },
-              {
-                key: "Percentage",
-                value: `${((datum.value / sum) * 100).toFixed(0)}%`,
-              },
-              { key: "Last update on", value: datum.lastUpdate },
-            ]}
-            segmentDescription={(datum, sum) =>
-              `${datum.value}개, ${((datum.value / sum) * 100).toFixed(0)}%`
-            }
-            hideFilter
-          />
+          {chatTypeLoading ? (
+            <Box textAlign="center" padding="xl">
+              로딩 중...
+            </Box>
+          ) : chatTypeError ? (
+            <Box textAlign="center" padding="xl" color="text-status-error">
+              오류: {chatTypeError.message}
+            </Box>
+          ) : (
+            <PieChart
+              data={chatKindData}
+              ariaLabel="Pie chart"
+              ariaDescription="Chat categories"
+              detailPopoverContent={(datum, sum) => [
+                { key: "Resource count", value: datum.value },
+                {
+                  key: "Percentage",
+                  value: `${((datum.value / sum) * 100).toFixed(0)}%`,
+                },
+                { key: "Last update on", value: datum.lastUpdate },
+              ]}
+              segmentDescription={(datum, sum) =>
+                `${datum.value}개, ${((datum.value / sum) * 100).toFixed(0)}%`
+              }
+              hideFilter
+            />
+          )}
         </Container>
         <Container
           fitHeight
           header={<Header variant="h2">📈 시간대별 채팅 수</Header>}
         >
-          <LineChart
-            series={[
-              { title: "Chat count", type: "line", data: chatCountData },
-              ...thresholdSeries,
-              // { title: "피크 시간대", type: "threshold", x: peakPoint.x },
-            ]}
-            // xDomain={[
-            //   new Date("2024-08-01T00:00:00+09:00"),
-            //   new Date("2024-08-01T23:59:59+09:00"),
-            // ]}
-            xDomain={[
-              todayAtKST(0, 0, 0), // 오늘 00:00:00
-              todayAtKST(23, 59, 59), // 오늘 23:59:59
-            ]}
-            yDomain={[0, Math.ceil(maxY / 100) * 100]}
-            height={300}
-            xScaleType="time"
-            xTitle="시간 (한국 기준)"
-            yTitle="채팅 수"
-            hideFilter
-            ariaLabel="채팅 수 라인 차트"
-            detailPopoverSeriesContent={({ series, x, y }) => ({
-              key: `🌟 ${series.title}`,
-              value: `${y}개 (${x.toLocaleTimeString("ko-KR", {
-                hour: "2-digit",
-                minute: "2-digit",
-              })})`,
-            })}
-          />
+          {hourlyLoading ? (
+            <Box textAlign="center" padding="xl">
+              <Box fontSize="heading-m" color="text-status-info">
+                데이터를 불러오는 중...
+              </Box>
+            </Box>
+          ) : hourlyError ? (
+            <Box textAlign="center" padding="xl">
+              <Box fontSize="heading-m" color="text-status-error">
+                데이터 로드 중 오류가 발생했습니다.
+              </Box>
+            </Box>
+          ) : (
+            <LineChart
+              series={lineChartSeries}
+              xDomain={
+                hourlyData?.date
+                  ? [
+                      new Date(`${hourlyData.date}T00:00:00+09:00`), // 해당 날짜 00:00:00
+                      new Date(`${hourlyData.date}T23:59:59+09:00`), // 해당 날짜 23:59:59
+                    ]
+                  : [
+                      todayAtKST(0, 0, 0), // 오늘 00:00:00
+                      todayAtKST(23, 59, 59), // 오늘 23:59:59
+                    ]
+              }
+              yDomain={[0, Math.ceil(maxY / 100) * 100]}
+              height={300}
+              xScaleType="time"
+              xTitle="시간 (한국 기준)"
+              yTitle="채팅 수"
+              hideFilter
+              ariaLabel="채팅 수 라인 차트"
+              detailPopoverSeriesContent={({ series, x, y }) => ({
+                key: `🌟 ${series.title}`,
+                value: `${y}개 (${x.toLocaleTimeString("ko-KR", {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })})`,
+              })}
+            />
+          )}
         </Container>
 
         {/* // 사용자 채팅 랭킹 - 바 차트
@@ -567,25 +673,40 @@ export default function Dashboard() {
           fitHeight
           header={<Header variant="h2">💬 실시간 채팅 랭킹 (Top 10)</Header>}
         >
-          <SpaceBetween size="s">
-            {[...userChatCountData]
-              .sort((a, b) => b.count - a.count)
-              .map((user, index) => {
-                const rankIcon = ["🥇", "🥈", "🥉"][index] || `${index + 1}위`;
-                return (
-                  <Box key={user.name} display="inline-block">
-                    <SpaceBetween direction="horizontal" size="m">
-                      <Box fontWeight="bold">
-                        {rankIcon} {user.name}
-                      </Box>
-                      <Box color="text-status-info" fontWeight="bold">
-                        {user.count.toLocaleString()}개
-                      </Box>
-                    </SpaceBetween>
-                  </Box>
-                );
-              })}
-          </SpaceBetween>
+          {chatRankingLoading ? (
+            <Box textAlign="center" padding="xl">
+              <Box fontSize="heading-m" color="text-status-info">
+                랭킹 데이터를 불러오는 중...
+              </Box>
+            </Box>
+          ) : chatRankingError ? (
+            <Box textAlign="center" padding="xl">
+              <Box fontSize="heading-m" color="text-status-error">
+                랭킹 데이터 로드 중 오류가 발생했습니다.
+              </Box>
+            </Box>
+          ) : (
+            <SpaceBetween size="s">
+              {[...userChatCountData]
+                .sort((a, b) => b.count - a.count)
+                .map((user, index) => {
+                  const rankIcon =
+                    ["🥇", "🥈", "🥉"][index] || `${index + 1}위`;
+                  return (
+                    <Box key={user.name} display="inline-block">
+                      <SpaceBetween direction="horizontal" size="m">
+                        <Box fontWeight="bold">
+                          {rankIcon} {user.name}
+                        </Box>
+                        <Box color="text-status-info" fontWeight="bold">
+                          {user.count.toLocaleString()}개
+                        </Box>
+                      </SpaceBetween>
+                    </Box>
+                  );
+                })}
+            </SpaceBetween>
+          )}
         </Container>
       </Grid>
 

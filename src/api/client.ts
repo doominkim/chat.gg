@@ -17,6 +17,7 @@ class ApiClient {
     options: RequestInit = {}
   ): Promise<ApiResponse<T>> {
     const url = getApiUrl(endpoint);
+    console.log(`API 호출: ${endpoint}`, new Date().toISOString());
 
     const config: RequestInit = {
       headers: {
@@ -34,12 +35,14 @@ class ApiClient {
       }
 
       const data = await response.json();
+      console.log(`API 응답: ${endpoint}`, data);
 
       return {
         data,
         status: response.status,
       };
     } catch (error) {
+      console.error(`API 에러: ${endpoint}`, error);
       throw {
         message: error instanceof Error ? error.message : "Unknown error",
         status: 500,
