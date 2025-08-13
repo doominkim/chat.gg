@@ -1,5 +1,4 @@
-// // src/pages/UserDetail.tsx
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import {
   Box,
   Container,
@@ -14,95 +13,15 @@ import type { DateRangePickerProps } from "@cloudscape-design/components";
 import ReactWordCloud from "react-d3-cloud";
 import ChatBubble from "@cloudscape-design/chat-components/chat-bubble";
 import Avatar from "@cloudscape-design/chat-components/avatar";
-
 import { useParams } from "react-router-dom";
 import NotFoundUser from "./NotFoundUser";
-
-/** ===== env & endpoints ===== */
-const API_BASE_URL =
-  (import.meta as any)?.env?.VITE_API_BASE_URL || "https://api.f-yourchat.com";
-
-/** 프론트에서 직접 람다 호출 (Function URL 또는 API Gateway URL) */
-const LAMBDA_ANALYZE_URL = (import.meta as any)?.env
-  ?.VITE_LAMBDA_ANALYZE_URL as string;
-
-const ENDPOINTS = {
-  chatKinds: (nickname: string, start: string, end: string) =>
-    `${API_BASE_URL}/user/chat-kinds?nickname=${encodeURIComponent(
-      nickname
-    )}&start=${start}&end=${end}`,
-  topStreamers: (nickname: string, start: string, end: string) =>
-    `${API_BASE_URL}/user/top-streamers?nickname=${encodeURIComponent(
-      nickname
-    )}&start=${start}&end=${end}`,
-  chatHistory: (nickname: string, start: string, end: string) =>
-    `${API_BASE_URL}/user/chat-history?nickname=${encodeURIComponent(
-      nickname
-    )}&start=${start}&end=${end}`,
-};
-
-type MessageType = "text" | "emote" | "donation";
-
-interface ChatMessage {
-  id: string;
-  nickname: string; // 식별자 = 닉네임
-  channelId: string; // 어떤 스트리머 채널에서 쳤는지
-  channelName: string;
-  message: string;
-  messageType: MessageType;
-  createdAt: string; // ISO string
-}
-
-type ChatKindsItem = { title: string; value: number; lastUpdate?: string };
-type ChatKindsResponse = {
-  success: boolean;
-  data: ChatKindsItem[];
-  message?: string;
-};
-
-type TopStreamersItem = { name: string; count: number; percentage?: number };
-type TopStreamersResponse = {
-  success: boolean;
-  data: TopStreamersItem[];
-  message?: string;
-};
-
-type ChatHistoryResponse = {
-  success: boolean;
-  data: ChatMessage[];
-  message?: string;
-};
-
-type WordCloudItem = { text: string; value: number };
-
-type FreqWordItem = {
-  rank: number;
-  word: string;
-  count: number;
-  percentage: number;
-};
-
-/** 단일 람다 응답 타입 */
-type AnalyzeLambdaResp = {
-  success: boolean;
-  data: {
-    wordCloud?: WordCloudItem[];
-    frequentWords?: Array<{ word: string; count: number; percentage: number }>;
-    persona?: {
-      favoriteStreamers?: Array<{ name: string; score: number }>;
-      traits?: Array<{ text: string; value: number }>;
-    };
-  };
-  message?: string;
-};
+import type {
+  ChatMessage,
+  WordCloudItem,
+  FreqWordItem,
+} from "../api/services/userDetailService";
 
 /** ===== helpers ===== */
-const toLocalTime = (iso: string) =>
-  new Date(iso).toLocaleTimeString("ko-KR", {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-
 const initialsOf = (name: string) =>
   name
     .split(/\s+/)
@@ -145,131 +64,91 @@ const UserDetail: React.FC = () => {
     }).format(new Date()),
   });
 
-  /** 로딩/에러 */
-  const [loading, setLoading] = useState(false);
-  const [err, setErr] = useState<string | null>(null);
+  /** 유저 존재 여부 */
+  const userFound = !!nickname;
 
-  /** 데이터 상태 */
-  const [wordCloudData, setWordCloudData] = useState<WordCloudItem[]>([]);
-  const [freqWords, setFreqWords] = useState<FreqWordItem[]>([]);
-  const [chatKinds, setChatKinds] = useState<ChatKindsItem[]>([]);
-  const [topStreamers, setTopStreamers] = useState<TopStreamersItem[]>([]);
-  const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
+  /** 더미 데이터 */
+  const wordCloudData: WordCloudItem[] = [
+    { text: "안녕하세요", value: 50 },
+    { text: "좋아요", value: 40 },
+    { text: "대박", value: 35 },
+    { text: "ㅋㅋㅋ", value: 30 },
+    { text: "응원", value: 25 },
+    { text: "사랑해요", value: 20 },
+    { text: "최고", value: 18 },
+    { text: "화이팅", value: 15 },
+    { text: "멋져요", value: 12 },
+    { text: "감사합니다", value: 10 },
+  ];
 
-  /** 유저 존재 여부: 백엔드에서 NotFound를 404로 준다면 여기서 체크 */
-  const userFound = !!nickname; // 필요시 API로 프로필 조회해 validate 가능
+  const freqWords: FreqWordItem[] = [
+    { rank: 1, word: "안녕하세요", count: 150, percentage: 25 },
+    { rank: 2, word: "좋아요", count: 120, percentage: 20 },
+    { rank: 3, word: "대박", count: 90, percentage: 15 },
+  ];
 
-  /** API/Lambda 호출 */
-  useEffect(() => {
-    if (!nickname) return;
-    if (
-      !range ||
-      range.type !== "absolute" ||
-      !range.startDate ||
-      !range.endDate
-    )
-      return;
+  const chatKindsData = [
+    { title: "일반 채팅", value: 1500, lastUpdate: "2024-01-15" },
+    { title: "이모티콘", value: 800, lastUpdate: "2024-01-15" },
+    { title: "후원", value: 300, lastUpdate: "2024-01-15" },
+  ];
 
-    const ac = new AbortController();
+  const topStreamersData = [
+    { name: "치지직이", count: 450, percentage: 45 },
+    { name: "고양이짱", count: 320, percentage: 32 },
+    { name: "악플러123", count: 230, percentage: 23 },
+  ];
 
-    (async () => {
-      try {
-        setLoading(true);
-        setErr(null);
+  const chatHistoryData: ChatMessage[] = [
+    {
+      id: "1",
+      nickname: nickname,
+      channelId: "channel1",
+      channelName: "치지직이",
+      message: "안녕하세요! 오늘도 좋은 방송 감사합니다 😊",
+      messageType: "text",
+      createdAt: "2024-01-15T10:30:00Z",
+    },
+    {
+      id: "2",
+      nickname: nickname,
+      channelId: "channel1",
+      channelName: "치지직이",
+      message: "대박! 정말 재미있어요",
+      messageType: "text",
+      createdAt: "2024-01-15T10:25:00Z",
+    },
+    {
+      id: "3",
+      nickname: nickname,
+      channelId: "channel2",
+      channelName: "고양이짱",
+      message: "고양이 너무 귀여워요 🐱",
+      messageType: "text",
+      createdAt: "2024-01-15T09:15:00Z",
+    },
+    {
+      id: "4",
+      nickname: nickname,
+      channelId: "channel2",
+      channelName: "고양이짱",
+      message: "사랑해요!",
+      messageType: "text",
+      createdAt: "2024-01-15T09:10:00Z",
+    },
+    {
+      id: "5",
+      nickname: nickname,
+      channelId: "channel3",
+      channelName: "악플러123",
+      message: "화이팅!",
+      messageType: "text",
+      createdAt: "2024-01-15T08:45:00Z",
+    },
+  ];
 
-        const { startDate, endDate } = range;
-
-        // 1, 2) 단일 람다 호출: 워드클라우드 + 많이 쓴 단어
-        const pLambda = (async () => {
-          if (!LAMBDA_ANALYZE_URL) {
-            setWordCloudData([]);
-            setFreqWords([]);
-            return;
-          }
-          const res = await fetch(LAMBDA_ANALYZE_URL, {
-            method: "POST",
-            signal: ac.signal,
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              nickname,
-              startDate,
-              endDate,
-              // 옵션(람다에서 사용): 분석 항목 지정
-              tasks: ["wordCloud", "frequentWords", "persona"],
-              topN: 10,
-              maxItems: 60,
-              excludeEmotes: true,
-            }),
-          });
-          if (!res.ok) throw new Error(`Lambda(analyze) HTTP ${res.status}`);
-          const json: AnalyzeLambdaResp = await res.json();
-          if (!json?.success)
-            throw new Error(json?.message || "AI 분석 수신 실패");
-
-          // 워드클라우드: 우선 data.wordCloud, 없으면 persona.traits 사용
-          const wc = json.data?.wordCloud ?? json.data?.persona?.traits ?? [];
-          setWordCloudData(Array.isArray(wc) ? wc : []);
-
-          // 많이 쓴 단어: rank가 없다고 가정하고 프론트에서 순위 부여
-          const fw = json.data?.frequentWords ?? [];
-          const ranked: FreqWordItem[] = fw.map((it, i) => ({
-            rank: i + 1,
-            word: it.word,
-            count: it.count,
-            percentage: it.percentage,
-          }));
-          setFreqWords(ranked);
-        })();
-
-        // 2) API: 채팅 유형 분포
-        const pKinds = (async () => {
-          const res = await fetch(
-            ENDPOINTS.chatKinds(nickname, startDate!, endDate!),
-            { signal: ac.signal }
-          );
-          if (!res.ok) throw new Error(`chat-kinds HTTP ${res.status}`);
-          const json: ChatKindsResponse = await res.json();
-          if (!json?.success)
-            throw new Error(json?.message || "채팅 유형 수신 실패");
-          setChatKinds(json.data || []);
-        })();
-
-        // 3) API: 시청 스트리머 Top3
-        const pTop = (async () => {
-          const res = await fetch(
-            ENDPOINTS.topStreamers(nickname, startDate!, endDate!),
-            { signal: ac.signal }
-          );
-          if (!res.ok) throw new Error(`top-streamers HTTP ${res.status}`);
-          const json: TopStreamersResponse = await res.json();
-          if (!json?.success)
-            throw new Error(json?.message || "Top 스트리머 수신 실패");
-          setTopStreamers(json.data || []);
-        })();
-
-        // 4) API: 채팅 내역(기간)
-        const pHist = (async () => {
-          const res = await fetch(
-            ENDPOINTS.chatHistory(nickname, startDate!, endDate!),
-            { signal: ac.signal }
-          );
-          if (!res.ok) throw new Error(`chat-history HTTP ${res.status}`);
-          const json: ChatHistoryResponse = await res.json();
-          if (!json?.success)
-            throw new Error(json?.message || "채팅 내역 수신 실패");
-          setChatHistory(json.data || []);
-        })();
-
-        await Promise.all([pLambda, pKinds, pTop, pHist]);
-      } catch (e: any) {
-        if (e?.name !== "AbortError") setErr(e?.message || "데이터 로드 실패");
-      } finally {
-        setLoading(false);
-      }
-    })();
-
-    return () => ac.abort();
-  }, [nickname, range]);
+  /** 로딩 상태 */
+  const loading = false;
 
   /** 스트리머별 탭 구성 */
   const tabs = useMemo(() => {
@@ -278,7 +157,7 @@ const UserDetail: React.FC = () => {
       { name: string; messages: ChatMessage[] }
     >();
 
-    for (const m of chatHistory) {
+    for (const m of chatHistoryData) {
       const k = m.channelId || m.channelName;
       if (!byStreamer.has(k)) {
         byStreamer.set(k, { name: m.channelName, messages: [] });
@@ -292,7 +171,7 @@ const UserDetail: React.FC = () => {
       content: (
         <Box padding="s">
           <SpaceBetween size="s">
-            {chatHistory
+            {chatHistoryData
               .sort(
                 (a, b) =>
                   new Date(b.createdAt).getTime() -
@@ -353,7 +232,7 @@ const UserDetail: React.FC = () => {
     }));
 
     return [allTab, ...streamerTabs];
-  }, [chatHistory]);
+  }, [chatHistoryData]);
 
   if (!userFound) return <NotFoundUser />;
 
@@ -451,7 +330,7 @@ const UserDetail: React.FC = () => {
             header={<Header variant="h2">📊 채팅 유형 분포</Header>}
           >
             <PieChart
-              data={chatKinds}
+              data={chatKindsData}
               ariaLabel="Pie chart"
               ariaDescription="Chat categories"
               detailPopoverContent={(datum, sum) => [
@@ -467,7 +346,7 @@ const UserDetail: React.FC = () => {
               }
               hideFilter
             />
-            {!loading && chatKinds.length === 0 && (
+            {!loading && chatKindsData.length === 0 && (
               <Box margin={{ top: "s" }} color="text-body-secondary">
                 데이터가 없습니다.
               </Box>
@@ -481,7 +360,7 @@ const UserDetail: React.FC = () => {
           >
             <SpaceBetween size="s">
               <Box>
-                {topStreamers.slice(0, 3).map((item, idx) => (
+                {topStreamersData.slice(0, 3).map((item, idx) => (
                   <Box key={`${item.name}-${idx}`} padding={{ bottom: "xs" }}>
                     <Box display="inline-block" margin={{ right: "s" }}>
                       {getRankBadge(idx + 1)}
@@ -503,7 +382,7 @@ const UserDetail: React.FC = () => {
                     </Grid>
                   </Box>
                 ))}
-                {!loading && topStreamers.length === 0 && (
+                {!loading && topStreamersData.length === 0 && (
                   <Box margin={{ top: "s" }} color="text-body-secondary">
                     데이터가 없습니다.
                   </Box>
@@ -599,10 +478,14 @@ const UserDetail: React.FC = () => {
                       if (r.type === "relative") {
                         // amount > 0 이어야 하고 unit(day|week|month|year 등) 필요
                         // (Cloudscape 내부에서 실제 날짜 계산은 컴포넌트가 처리)
+                        const relativeRange = r as {
+                          amount: number;
+                          unit: string;
+                        };
                         const ok =
-                          typeof (r as any).amount === "number" &&
-                          (r as any).amount > 0 &&
-                          !!(r as any).unit;
+                          typeof relativeRange.amount === "number" &&
+                          relativeRange.amount > 0 &&
+                          !!relativeRange.unit;
                         return ok
                           ? { valid: true }
                           : {

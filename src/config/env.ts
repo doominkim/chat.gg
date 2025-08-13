@@ -8,6 +8,10 @@ export const API_CONFIG = {
   },
 } as const;
 
+export const LAMBDA_CONFIG = {
+  analyzeUrl: import.meta.env.VITE_LAMBDA_ANALYZE_URL as string,
+} as const;
+
 export const getApiUrl = (endpoint: string): string => {
   return `${API_CONFIG.baseURL}${endpoint}`;
 };
