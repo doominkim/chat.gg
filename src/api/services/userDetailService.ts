@@ -40,17 +40,12 @@ export interface AnalyzeLambdaResp {
   data: {
     wordCloud?: WordCloudItem[];
     frequentWords?: Array<{ word: string; count: number; percentage: number }>;
-    persona?: {
-      favoriteStreamers?: Array<{ name: string; score: number }>;
-      traits?: Array<{ text: string; value: number }>;
-    };
   };
   message?: string;
 }
 
 // Swagger 기반 사용자 상세 타입들
 export interface UserAnalysis {
-  persona?: Array<{ text: string; value: number }>;
   wordCloud?: WordCloudItem[];
   frequentWords?: Array<{ word: string; count: number; percentage?: number }>;
 }
