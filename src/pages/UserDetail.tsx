@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from "react";
+import React, { useState, useMemo, useCallback, useEffect } from "react";
 import {
   Box,
   Container,
@@ -10,6 +10,7 @@ import {
   Tabs,
   Input,
   Button,
+  Spinner,
 } from "@cloudscape-design/components";
 import type { DateRangePickerProps } from "@cloudscape-design/components";
 import ReactWordCloud from "react-d3-cloud";
@@ -23,11 +24,18 @@ import type {
   ChatMessage,
   WordCloudItem,
   FreqWordItem,
+  AnalyzeLambdaResp,
   UserAnalysis,
   UserWordFrequencyItem,
   UserChatTypeDistributionItem,
   WatchedStreamerItem,
 } from "../api/services/userDetailService";
+import type { ApiResponse } from "../api/client";
+
+import.meta.env.VITE_LAMBDA_ANALYZE_URL;
+
+const LAMBDA_ANALYZE_URL = (import.meta as any)?.env
+  ?.VITE_LAMBDA_ANALYZE_URL as string;
 
 /** ===== helpers ===== */
 const initialsOf = (name: string) =>
@@ -39,7 +47,7 @@ const initialsOf = (name: string) =>
 
 const getRankBadge = (rank: number) => {
   const badge =
-    rank === 1 ? "🥇" : rank === 2 ? "🥈" : rank === 3 ? "🥉" : `${rank}위`;
+    rank === 1 ? "🥇" : rank === 2 ? "🥈" : rank === 3 ? "🥉" : `···`;
   return (
     <span
       style={{
@@ -91,21 +99,101 @@ const UserDetail: React.FC = () => {
     return { start: undefined, end: undefined };
   }, [range]);
 
-  // API calls using userIdHash
-  const analysisApiCall = useCallback(() => {
-    if (!userIdHash) throw new Error("userIdHash is required");
-    return userDetailService.getUserAnalysis(userIdHash, { start, end });
-  }, [userIdHash, start, end]);
-
-  const wordFreqApiCall = useCallback(() => {
-    if (!userIdHash) throw new Error("userIdHash is required");
-    return userDetailService.getUserWordFrequency(userIdHash, {
+  // [Lambda] 호출 (start/end 변경 시 자동 재호출)
+  const lambdaAnalyzeApiCall = useCallback(async (): Promise<
+    ApiResponse<AnalyzeLambdaResp>
+  > => {
+    console.log("🚀 [LambdaAnalyze] 호출 시작", {
+      userIdHash,
+      LAMBDA_ANALYZE_URL,
       start,
       end,
-      topN: 3,
     });
+
+    if (!userIdHash) {
+      console.error("[LambdaAnalyze] ❌ userIdHash is required");
+      throw new Error("userIdHash is required");
+    }
+    if (!LAMBDA_ANALYZE_URL) {
+      console.error("[LambdaAnalyze] ❌ Lambda URL is not configured");
+      throw new Error("Lambda URL is not configured");
+    }
+
+    const body = {
+      userIdHash,
+      startDate: start,
+      endDate: end,
+      tasks: ["wordCloud", "frequentWords"],
+      topN: 7,
+      maxItems: 60,
+      excludeEmotes: true,
+    };
+    console.log("📤 [LambdaAnalyze] 요청 바디", body);
+
+    try {
+      const res = await fetch(LAMBDA_ANALYZE_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+
+      console.log("📥 [LambdaAnalyze] 응답 상태", res.status);
+
+      const json = await res.json();
+      console.log("📦 [LambdaAnalyze] 응답 JSON", json);
+
+      if (!res.ok) throw new Error(`Lambda(analyze) HTTP ${res.status}`);
+      if (!json?.success) throw new Error(json?.message || "AI 분석 수신 실패");
+
+      return {
+        status: res.status,
+        data: json,
+        message: json.message,
+      };
+    } catch (err) {
+      console.error("💥 [LambdaAnalyze] 호출 실패", err);
+      throw err;
+    }
   }, [userIdHash, start, end]);
 
+  /** start/end가 변경되면 useApi 자동 재호출 */
+  const {
+    data: lambdaData,
+    loading: lambdaLoading,
+    error: lambdaError,
+  } = useApi<AnalyzeLambdaResp>(lambdaAnalyzeApiCall, [lambdaAnalyzeApiCall]);
+
+  // wordCloud 데이터 가공
+  const wordCloudData: WordCloudItem[] = useMemo(
+    () =>
+      Array.isArray(lambdaData?.data?.wordCloud)
+        ? lambdaData!.data!.wordCloud!
+        : [],
+    [lambdaData]
+  );
+
+  // frequentWords 데이터 가공
+  const freqWords: FreqWordItem[] = useMemo(() => {
+    const fw = lambdaData?.data?.frequentWords ?? [];
+    return fw.map((it, idx) => ({
+      rank: idx + 1,
+      word: it.word,
+      count: it.count,
+      percentage: Math.round(it.percentage * 100) / 100,
+    }));
+  }, [lambdaData]);
+
+  useEffect(() => {
+    if (!lambdaLoading) {
+      if (lambdaError) {
+        console.error("[LambdaAnalyze] ❌ 로드 실패", lambdaError);
+      } else {
+        console.debug("[LambdaAnalyze] ✅ 로드 완료", lambdaData);
+      }
+    }
+  }, [lambdaData, lambdaLoading, lambdaError]);
+
+  // API calls using userIdHash
   const chatHistoryApiCall = useCallback(() => {
     if (!userIdHash) throw new Error("userIdHash is required");
     return userDetailService.getUserChatHistory(userIdHash, { start, end });
@@ -125,78 +213,83 @@ const UserDetail: React.FC = () => {
     });
   }, [userIdHash, start, end]);
 
-  const { data: analysisData, loading: analysisLoading } = useApi<UserAnalysis>(
-    analysisApiCall,
-    [analysisApiCall]
-  );
-  const { data: wordFreqData, loading: wordFreqLoading } = useApi<
-    UserWordFrequencyItem[]
-  >(wordFreqApiCall, [wordFreqApiCall]);
+  // const { data: analysisData, loading: analysisLoading } = useApi<UserAnalysis>(
+  //   analysisApiCall,
+  //   [analysisApiCall]
+  // );
+  // const { data: wordFreqData, loading: wordFreqLoading } = useApi<
+  //   UserWordFrequencyItem[]
+  // >(wordFreqApiCall, [wordFreqApiCall]);
+
   const { data: chatHistoryApiData } = useApi<ChatMessage[]>(
     chatHistoryApiCall,
     [chatHistoryApiCall]
   );
+
   const { data: chatTypeData, loading: chatTypeLoading } = useApi<
     UserChatTypeDistributionItem[]
   >(chatTypeApiCall, [chatTypeApiCall]);
+
   const { data: watchedStreamersData, loading: watchedStreamersLoading } =
     useApi<WatchedStreamerItem[]>(watchedStreamersApiCall, [
       watchedStreamersApiCall,
     ]);
 
   /** 데이터 변환 (배열 가드) */
-  const wordCloudData: WordCloudItem[] = useMemo(() => {
-    return Array.isArray(analysisData?.wordCloud)
-      ? analysisData!.wordCloud!
-      : [];
-  }, [analysisData]);
+  // const wordCloudData: WordCloudItem[] = useMemo(() => {
+  //   return Array.isArray(analysisData?.wordCloud)
+  //     ? analysisData!.wordCloud!
+  //     : [];
+  // }, [analysisData]);
 
-  const freqWords: FreqWordItem[] = useMemo(() => {
-    if (Array.isArray(wordFreqData)) {
-      return wordFreqData.map((item, idx) => {
-        const asAny = item as unknown as {
-          count?: number;
-          frequency?: number;
-          percentage?: number;
-          word: string;
-        };
-        const countValue =
-          typeof asAny.count === "number"
-            ? asAny.count
-            : typeof asAny.frequency === "number"
-            ? asAny.frequency
-            : 0;
-        const percentageValue =
-          typeof asAny.percentage === "number" ? asAny.percentage : 0;
-        return {
-          rank: idx + 1,
-          word: asAny.word,
-          count: countValue,
-          percentage: Math.round(percentageValue * 100) / 100,
-        };
-      });
-    }
+  // const freqWords: FreqWordItem[] = useMemo(() => {
+  //   if (Array.isArray(wordFreqData)) {
+  //     return wordFreqData.map((item, idx) => {
+  //       const asAny = item as unknown as {
+  //         count?: number;
+  //         frequency?: number;
+  //         percentage?: number;
+  //         word: string;
+  //       };
 
-    type WordFrequencyApiResponse = {
-      data?: {
-        words?: Array<{ word: string; frequency: number; length?: number }>;
-        totalWords?: number;
-      };
-    } | null;
+  //       const countValue =
+  //         typeof asAny.count === "number"
+  //           ? asAny.count
+  //           : typeof asAny.frequency === "number"
+  //           ? asAny.frequency
+  //           : 0;
 
-    const resp: WordFrequencyApiResponse =
-      wordFreqData as unknown as WordFrequencyApiResponse;
-    const words = resp?.data?.words || [];
-    const total = resp?.data?.totalWords || 0;
+  //       const percentageValue =
+  //         typeof asAny.percentage === "number" ? asAny.percentage : 0;
+  //       return {
+  //         rank: idx + 1,
+  //         word: asAny.word,
+  //         count: countValue,
+  //         percentage: Math.round(percentageValue * 100) / 100,
+  //       };
+  //     });
+  //   }
 
-    return words.slice(0, 3).map((w, idx) => ({
-      rank: idx + 1,
-      word: w.word,
-      count: w.frequency,
-      percentage:
-        total > 0 ? Math.round((w.frequency / total) * 100 * 100) / 100 : 0,
-    }));
-  }, [wordFreqData]);
+  //   type WordFrequencyApiResponse = {
+  //     data?: {
+  //       words?: Array<{ word: string; frequency: number; length?: number }>;
+  //       totalWords?: number;
+  //     };
+  //   } | null;
+
+  //   const resp: WordFrequencyApiResponse =
+  //     wordFreqData as unknown as WordFrequencyApiResponse;
+  //   const words = resp?.data?.words || [];
+  //   const total = resp?.data?.totalWords || 0;
+
+  //   return words.slice(0, 3).map((w, idx) => ({
+  //     rank: idx + 1,
+  //     word: w.word,
+  //     count: w.frequency,
+  //     percentage:
+  //       total > 0 ? Math.round((w.frequency / total) * 100 * 100) / 100 : 0,
+  //   }));
+  // }, [wordFreqData]);
 
   const chatKindsData = useMemo(() => {
     type TypeCount = { type: string; count: number };
@@ -399,10 +492,12 @@ const UserDetail: React.FC = () => {
           user.name.toLowerCase().includes(searchValue.toLowerCase()) ||
           user.id.toLowerCase().includes(searchValue.toLowerCase())
       );
+
       const dummyResult = {
         userIdHashes: filteredUsers.map((user) => user.id),
         users: filteredUsers,
       } as { userIdHashes: string[]; users: { name: string }[] };
+
       if (dummyResult.users.length > 1) {
         navigate("/user-select", {
           state: {
@@ -532,26 +627,120 @@ const UserDetail: React.FC = () => {
               ></Box>
             </Header>
           </Box>
-
-          {/* 닉네임 검색 영역 */}
           <Box>
-            <SpaceBetween size="s" direction="horizontal">
-              <Input
-                value={searchValue}
-                onChange={({ detail }) => setSearchValue(detail.value)}
-                placeholder="다른 유저의 닉네임을 입력하세요"
-                onKeyDown={handleKeyDown}
-                disabled={isSearching}
-              />
-              <Button
-                variant="primary"
-                onClick={handleSearch}
-                loading={isSearching}
-                disabled={!searchValue.trim()}
-              >
-                검색
-              </Button>
-            </SpaceBetween>
+            <DateRangePicker
+              onChange={({ detail }) => {
+                if (!detail.value) return; // null이면 무시
+                setRange(detail.value);
+              }}
+              value={range}
+              dateOnly
+              expandToViewport
+              relativeOptions={[
+                {
+                  key: "last-7-days",
+                  type: "relative",
+                  amount: 7,
+                  unit: "day",
+                },
+                {
+                  key: "last-14-days",
+                  type: "relative",
+                  amount: 14,
+                  unit: "day",
+                },
+                {
+                  key: "last-30-days",
+                  type: "relative",
+                  amount: 30,
+                  unit: "day",
+                },
+                {
+                  key: "last-90-days",
+                  type: "relative",
+                  amount: 90,
+                  unit: "day",
+                },
+                {
+                  key: "last-12-months",
+                  type: "relative",
+                  amount: 12,
+                  unit: "month",
+                },
+              ]}
+              isValidRange={(r) => {
+                if (!r)
+                  return {
+                    valid: false,
+                    errorMessage: "날짜 범위를 선택하세요.",
+                  };
+                if (r.type === "absolute") {
+                  if (!r.startDate || !r.endDate) {
+                    return {
+                      valid: false,
+                      errorMessage: "시작·종료일을 모두 선택하세요.",
+                    };
+                  }
+                  if (new Date(r.startDate) > new Date(r.endDate)) {
+                    return {
+                      valid: false,
+                      errorMessage: "시작일이 종료일보다 이전이어야 합니다.",
+                    };
+                  }
+                  const today = new Date();
+                  if (
+                    new Date(r.startDate) > today ||
+                    new Date(r.endDate) > today
+                  ) {
+                    return {
+                      valid: false,
+                      errorMessage: "미래 날짜는 선택할 수 없습니다.",
+                    };
+                  }
+                  return { valid: true };
+                }
+                if (r.type === "relative") {
+                  const rel = r as { amount: number; unit: string };
+                  const ok =
+                    typeof rel.amount === "number" &&
+                    rel.amount > 0 &&
+                    !!rel.unit;
+                  return ok
+                    ? { valid: true }
+                    : {
+                        valid: false,
+                        errorMessage: "상대 범위를 올바르게 선택하세요.",
+                      };
+                }
+                return {
+                  valid: false,
+                  errorMessage: "유효하지 않은 범위 형식입니다.",
+                };
+              }}
+              isDateEnabled={(date) => {
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                return date <= today;
+              }}
+              i18nStrings={{
+                todayAriaLabel: "오늘 날짜",
+                nextMonthAriaLabel: "다음 달",
+                previousMonthAriaLabel: "이전 달",
+                customRelativeRangeOptionLabel: "사용자 지정 범위",
+                customRelativeRangeOptionDescription:
+                  "사용자 지정 날짜 범위 입력",
+                customRelativeRangeUnitLabel: "단위",
+                customRelativeRangeDurationLabel: "기간",
+                startDateLabel: "시작일",
+                endDateLabel: "종료일",
+                clearButtonLabel: "지우기",
+                cancelButtonLabel: "취소",
+                applyButtonLabel: "적용",
+                relativeModeTitle: "상대적 범위",
+                absoluteModeTitle: "절대적 범위",
+              }}
+              placeholder="날짜 범위를 선택하세요"
+            />
           </Box>
         </SpaceBetween>
       </Box>
@@ -567,15 +756,32 @@ const UserDetail: React.FC = () => {
           ]}
         >
           {/* 사용자 분석(WordCloud) */}
-          <Container fitHeight header={<Header>사용자 분석</Header>}>
-            <Box>
-              <ReactWordCloud data={wordCloudData} width={400} height={400} />
-              {!analysisLoading && wordCloudData.length === 0 && (
-                <Box margin={{ top: "s" }} color="text-body-secondary">
-                  데이터가 없습니다.
+
+          <Container fitHeight header={<Header>🎯 사용자 성향 분석</Header>}>
+            {lambdaLoading ? (
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  height: "400px", // WordCloud 높이 확보용
+                }}
+              >
+                <Spinner size="big" />
+                <Box fontSize="heading-m" color="text-status-info">
+                  ... 분석 중
                 </Box>
-              )}
-            </Box>
+              </div>
+            ) : (
+              <div style={{ height: "400px" }}>
+                {wordCloudData.length === 0 && (
+                  <Box margin={{ top: "s" }} color="text-body-secondary">
+                    채팅 데이터가 없습니다.
+                  </Box>
+                )}
+                <ReactWordCloud data={wordCloudData} width={400} height={400} />
+              </div>
+            )}
           </Container>
 
           {/* 많이 쓴 단어 Top N */}
@@ -584,44 +790,61 @@ const UserDetail: React.FC = () => {
             header={<Header variant="h2">💬 많이 쓴 단어 Top 3</Header>}
           >
             <SpaceBetween size="s">
-              <Box>
-                {freqWords.map((item) => (
-                  <Box
-                    key={`${item.rank}-${item.word}`}
-                    padding={{ bottom: "xs" }}
-                  >
-                    <Box display="inline-block" margin={{ right: "s" }}>
-                      {getRankBadge(item.rank)}
+              {lambdaLoading ? (
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    height: "400px",
+                  }}
+                >
+                  <Spinner size="big" />
+                  <Box fontSize="heading-m" color="text-status-info">
+                    ... 분석 중{" "}
+                  </Box>
+                </div>
+              ) : (
+                <div style={{ height: "400px" }}>
+                  {wordCloudData.length === 0 && (
+                    <Box margin={{ top: "s" }} color="text-body-secondary">
+                      채팅 데이터가 없습니다.
                     </Box>
-                    <Box display="inline-block" fontWeight="bold">
-                      {item.word}
-                    </Box>
-                    <Grid
-                      gridDefinition={[
-                        { colspan: 5 },
-                        { colspan: 3 },
-                        { colspan: 4 },
-                      ]}
+                  )}
+                  {freqWords.map((item) => (
+                    <Box
+                      key={`${item.rank}-${item.word}`}
+                      padding={{ bottom: "xs" }}
                     >
-                      <Box
-                        textAlign="right"
-                        fontSize="body-s"
-                        color="text-body-secondary"
+                      <Box display="inline-block" margin={{ right: "s" }}>
+                        {getRankBadge(item.rank)}
+                      </Box>
+                      <Box display="inline-block" fontWeight="bold">
+                        {item.word}
+                      </Box>
+                      <Grid
+                        gridDefinition={[
+                          { colspan: 6 },
+                          { colspan: 2 },
+                          { colspan: 4 },
+                        ]}
                       >
-                        {item.count}회
-                      </Box>
-                      <Box textAlign="right" fontWeight="bold">
-                        {item.percentage}%
-                      </Box>
-                    </Grid>
-                  </Box>
-                ))}
-                {!wordFreqLoading && freqWords.length === 0 && (
-                  <Box margin={{ top: "s" }} color="text-body-secondary">
-                    데이터가 없습니다.
-                  </Box>
-                )}
-              </Box>
+                        <Box></Box>
+                        <Box
+                          textAlign="right"
+                          fontSize="body-s"
+                          color="text-body-secondary"
+                        >
+                          {item.count}회
+                        </Box>
+                        <Box textAlign="right" fontWeight="bold">
+                          {item.percentage}%
+                        </Box>
+                      </Grid>
+                    </Box>
+                  ))}
+                </div>
+              )}
             </SpaceBetween>
           </Container>
 
@@ -649,7 +872,7 @@ const UserDetail: React.FC = () => {
             />
             {!chatTypeLoading && chatKindsData.length === 0 && (
               <Box margin={{ top: "s" }} color="text-body-secondary">
-                데이터가 없습니다.
+                채팅 데이터가 없습니다.
               </Box>
             )}
           </Container>
@@ -700,7 +923,7 @@ const UserDetail: React.FC = () => {
             <Header
               actions={
                 <Box>
-                  <DateRangePicker
+                  {/* <DateRangePicker
                     onChange={({ detail }) => {
                       if (!detail.value) return; // null이면 무시
                       setRange(detail.value);
@@ -813,7 +1036,7 @@ const UserDetail: React.FC = () => {
                       absoluteModeTitle: "절대적 범위",
                     }}
                     placeholder="날짜 범위를 선택하세요"
-                  />
+                  /> */}
                 </Box>
               }
             >
