@@ -320,16 +320,16 @@ export function ChatList({ params = {} }: ChatListProps) {
         style={{
           display: "flex",
           flexDirection: "column",
-          gap: "8px",
-          padding: "20px",
-          background: "white",
-          borderRadius: "16px",
+          gap: "12px",
+          padding: "24px",
+          background: "#f8f9fa",
+          borderRadius: "12px",
           maxHeight: "600px",
           overflowY: "auto",
           border: "1px solid #e9ecef",
-          boxShadow: "0 2px 8px rgba(0, 0, 0, 0.04)",
+          boxShadow: "0 4px 12px rgba(0, 0, 0, 0.08)",
           scrollbarWidth: "thin",
-          scrollbarColor: "#e9ecef #ffffff",
+          scrollbarColor: "#dee2e6 #f8f9fa",
         }}
       >
         {chats.map((chat: ChatMessage, index: number) => {
@@ -345,8 +345,8 @@ export function ChatList({ params = {} }: ChatListProps) {
           // 채팅 타입에 따른 배경색 결정
           const getBubbleStyle = () => {
             const baseStyle = {
-              background: "#f8f9fa",
-              borderRadius: "20px",
+              background: "white",
+              borderRadius: "12px",
               padding: "12px 16px",
               position: "relative" as const,
               wordWrap: "break-word" as const,
@@ -354,31 +354,33 @@ export function ChatList({ params = {} }: ChatListProps) {
               border: "1px solid #e9ecef",
               transition: "all 0.2s ease",
               marginBottom: "4px",
+              boxShadow: "0 2px 8px rgba(0, 0, 0, 0.06)",
             };
 
             if (chat.chatType === "DONATION") {
               return {
                 ...baseStyle,
-                background: "linear-gradient(135deg, #ff6b6b, #ff8e8e)",
+                background: "linear-gradient(135deg, #dc3545, #c82333)",
                 color: "white",
-                border: "1px solid #dc3545",
-                boxShadow: "0 4px 16px rgba(255, 107, 107, 0.25)",
+                border: "1px solid #bd2130",
+                boxShadow: "0 4px 16px rgba(220, 53, 69, 0.3)",
               };
             } else if (chat.chatType === "BLIND") {
               return {
                 ...baseStyle,
-                background: "#f1f3f4",
-                color: "#6c757d",
-                border: "1px solid #dee2e6",
-                opacity: 0.8,
+                background: "#6c757d",
+                color: "white",
+                border: "1px solid #5a6268",
+                opacity: 0.9,
                 fontStyle: "italic",
               };
             } else if (isOwnMessage) {
               return {
                 ...baseStyle,
-                background: "#007bff",
+                background: "linear-gradient(135deg, #007bff, #0056b3)",
                 color: "white",
-                border: "1px solid #0056b3",
+                border: "1px solid #004085",
+                boxShadow: "0 4px 12px rgba(0, 123, 255, 0.3)",
               };
             }
 
@@ -398,6 +400,7 @@ export function ChatList({ params = {} }: ChatListProps) {
                 alignSelf: isOwnMessage ? "flex-end" : "flex-start",
                 marginLeft: isOwnMessage ? "auto" : "0",
                 marginRight: isOwnMessage ? "0" : "auto",
+                marginBottom: "16px",
               }}
             >
               {/* 채널 정보 표시 */}
