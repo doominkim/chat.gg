@@ -24,6 +24,7 @@ import type {
   UserWordFrequencyItem,
   UserChatTypeDistributionItem,
   WatchedStreamerItem,
+  StreamerResponse,
 } from "../api/services/userDetailService";
 import type { ApiResponse } from "../api/client";
 import type { FindChatParams } from "../types/chat";
@@ -200,7 +201,7 @@ const UserDetail: React.FC = () => {
   >(chatTypeApiCall, [chatTypeApiCall]);
 
   const { data: watchedStreamersData, loading: watchedStreamersLoading } =
-    useApi<WatchedStreamerItem[]>(watchedStreamersApiCall, [
+    useApi<StreamerResponse>(watchedStreamersApiCall, [
       watchedStreamersApiCall,
     ]);
 
@@ -351,6 +352,38 @@ const UserDetail: React.FC = () => {
   }, [chatTypeData]);
 
   const topStreamersData = useMemo(() => {
+    // 새로운 API 응답 구조 사용
+    if (watchedStreamersData?.data?.streamers) {
+      const streamers = watchedStreamersData.data.streamers;
+
+      // 전체 시청 시간 계산 (null이 아닌 값들만)
+      const totalWatchTime = streamers
+        .map((s) => s.watchTime)
+        .filter((time) => time !== null && time !== undefined)
+        .reduce((sum, time) => sum + (time || 0), 0);
+
+      return streamers.map((streamer) => {
+        // 퍼센트 계산 (전체 시청 시간 대비)
+        let percentage = 0;
+        if (
+          totalWatchTime > 0 &&
+          streamer.watchTime !== null &&
+          streamer.watchTime !== undefined
+        ) {
+          percentage = Math.round((streamer.watchTime / totalWatchTime) * 100);
+        }
+
+        return {
+          name: streamer.channelName,
+          count: streamer.chatCount || 0,
+          percentage: percentage,
+          rank: streamer.rank,
+          lastWatched: streamer.lastWatched,
+        };
+      });
+    }
+
+    // 기존 API 응답 구조 (fallback)
     const items = Array.isArray(watchedStreamersData)
       ? watchedStreamersData
       : [];
