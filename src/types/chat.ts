@@ -3,6 +3,7 @@ export enum ChatType {
   DONATION = "DONATION",
   FOLLOW = "FOLLOW",
   SYSTEM = "SYSTEM",
+  BLIND = "BLIND",
 }
 
 export interface Badge {
