@@ -23,6 +23,8 @@ export interface ChatMessage {
   userIdHash: string;
   nickname: string;
   badge: UserBadge[];
+  channelName?: string;
+  channelImageUrl?: string;
 }
 
 export interface FindChatParams {

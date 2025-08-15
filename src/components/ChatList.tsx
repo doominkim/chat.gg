@@ -173,6 +173,7 @@ export function ChatList({ params = {} }: ChatListProps) {
       content += `[${index + 1}] ${date}\n`;
       content += `닉네임: ${nickname}\n`;
       content += `타입: ${chatType}\n`;
+      if (chat.channelName) content += `채널: ${chat.channelName}\n`;
       content += `메시지: ${message}\n`;
 
       // 뱃지 정보 추가
@@ -399,6 +400,42 @@ export function ChatList({ params = {} }: ChatListProps) {
                 marginRight: isOwnMessage ? "0" : "auto",
               }}
             >
+              {/* 채널 정보 표시 */}
+              {chat.channelName && (
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "6px",
+                    marginBottom: "8px",
+                    padding: "6px 10px",
+                    background: "#f8f9fa",
+                    borderRadius: "10px",
+                    border: "1px solid #e9ecef",
+                    fontSize: "11px",
+                    color: "#6c757d",
+                    maxWidth: "fit-content",
+                    alignSelf: isOwnMessage ? "flex-end" : "flex-start",
+                    marginLeft: isOwnMessage ? "auto" : "0",
+                    marginRight: isOwnMessage ? "0" : "auto",
+                  }}
+                >
+                  {chat.channelImageUrl && (
+                    <img
+                      src={chat.channelImageUrl}
+                      alt={chat.channelName}
+                      style={{
+                        width: "14px",
+                        height: "14px",
+                        borderRadius: "50%",
+                        objectFit: "cover",
+                      }}
+                    />
+                  )}
+                  <span style={{ fontWeight: "600" }}>{chat.channelName}</span>
+                </div>
+              )}
+
               <div
                 className="chat-header"
                 style={{
