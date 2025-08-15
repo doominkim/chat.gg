@@ -1,6 +1,7 @@
 import { useChat } from "../api/hooks";
 import type { FindChatParams, ChatMessage, UserBadge } from "../types/chat";
 import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 interface ChatListProps {
   params?: FindChatParams;
@@ -12,6 +13,7 @@ export function ChatList({ params = {} }: ChatListProps) {
   const [isScrolledToBottom, setIsScrolledToBottom] = useState(true);
   const chatListRef = useRef<HTMLDivElement>(null);
   const previousChatsLength = useRef(0);
+  const navigate = useNavigate();
 
   console.log("ChatList 렌더링:", {
     params,
@@ -66,17 +68,21 @@ export function ChatList({ params = {} }: ChatListProps) {
         currentLength,
         previousLength,
         isScrolledToBottom,
-        newMessageCount
+        newMessageCount,
       });
 
       if (previousLength > 0 && currentLength > previousLength) {
         const newCount = currentLength - previousLength;
         console.log("새 메시지 개수:", newCount);
-        
+
         if (!isScrolledToBottom) {
           setNewMessageCount((prev) => {
             const updated = prev + newCount;
-            console.log("새 메시지 카운트 업데이트:", { prev, newCount, updated });
+            console.log("새 메시지 카운트 업데이트:", {
+              prev,
+              newCount,
+              updated,
+            });
             return updated;
           });
         } else {
@@ -113,6 +119,85 @@ export function ChatList({ params = {} }: ChatListProps) {
   // 새 메시지 알림 클릭 시 스크롤
   const handleNewMessageClick = () => {
     scrollToBottom();
+  };
+
+  // AI 분석 페이지로 이동
+  const handleAnalysisClick = () => {
+    navigate("/chat-analysis", { state: { chatParams: params } });
+  };
+
+  // 채팅 내역을 텍스트 파일로 추출
+  const handleExportClick = () => {
+    if (!Array.isArray(chats) || chats.length === 0) {
+      alert("추출할 채팅 내역이 없습니다.");
+      return;
+    }
+
+    const formatDate = (dateString: string) => {
+      try {
+        const date = new Date(dateString);
+        if (isNaN(date.getTime())) return "날짜 없음";
+        return date.toLocaleString();
+      } catch (error) {
+        return "날짜 오류";
+      }
+    };
+
+    // 파일명 생성
+    const now = new Date();
+    const timestamp = now.toISOString().slice(0, 19).replace(/:/g, "-");
+    const filename = `채팅내역_${timestamp}.txt`;
+
+    // 채팅 내역 텍스트 생성
+    let content = `=== 채팅 내역 추출 ===\n`;
+    content += `추출 시간: ${now.toLocaleString()}\n`;
+    content += `총 메시지 수: ${chats.length}개\n\n`;
+
+    // 필터 정보 추가
+    if (params.userIdHash) content += `사용자 ID: ${params.userIdHash}\n`;
+    if (params.nickname) content += `닉네임: ${params.nickname}\n`;
+    if (params.from)
+      content += `시작일: ${new Date(params.from).toLocaleDateString()}\n`;
+    if (params.to)
+      content += `종료일: ${new Date(params.to).toLocaleDateString()}\n`;
+    if (params.chatType) content += `채팅 타입: ${params.chatType}\n`;
+    content += `\n=== 채팅 내용 ===\n\n`;
+
+    // 각 채팅 메시지 추가
+    chats.forEach((chat, index) => {
+      const date = formatDate(chat.createdAt);
+      const nickname = chat.nickname || "익명";
+      const message = chat.message || "메시지 없음";
+      const chatType = chat.chatType || "CHAT";
+
+      content += `[${index + 1}] ${date}\n`;
+      content += `닉네임: ${nickname}\n`;
+      content += `타입: ${chatType}\n`;
+      content += `메시지: ${message}\n`;
+
+      // 뱃지 정보 추가
+      if (chat.badge && Array.isArray(chat.badge) && chat.badge.length > 0) {
+        const badgeNames = chat.badge
+          .map((b: UserBadge) => b.badge.badgeId)
+          .join(", ");
+        content += `뱃지: ${badgeNames}\n`;
+      }
+
+      content += `\n`;
+    });
+
+    // 파일 다운로드
+    const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    console.log("채팅 내역 추출 완료:", filename);
   };
 
   if (loading && !Array.isArray(chats)) {
@@ -441,6 +526,81 @@ export function ChatList({ params = {} }: ChatListProps) {
             </div>
           );
         })}
+      </div>
+
+      {/* 액션 버튼들 */}
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          gap: "16px",
+          marginTop: "20px",
+          padding: "20px",
+        }}
+      >
+        <button
+          onClick={handleExportClick}
+          style={{
+            background: "linear-gradient(135deg, #28a745, #20c997)",
+            color: "white",
+            border: "none",
+            borderRadius: "12px",
+            padding: "12px 24px",
+            fontSize: "14px",
+            fontWeight: "600",
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+            boxShadow: "0 4px 12px rgba(40, 167, 69, 0.3)",
+            transition: "all 0.3s ease",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = "translateY(-2px)";
+            e.currentTarget.style.boxShadow =
+              "0 6px 20px rgba(40, 167, 69, 0.4)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = "translateY(0)";
+            e.currentTarget.style.boxShadow =
+              "0 4px 12px rgba(40, 167, 69, 0.3)";
+          }}
+        >
+          <span style={{ fontSize: "16px" }}>📄</span>
+          채팅 내역 추출하기
+        </button>
+
+        <button
+          onClick={handleAnalysisClick}
+          style={{
+            background: "linear-gradient(135deg, #007bff, #0056b3)",
+            color: "white",
+            border: "none",
+            borderRadius: "12px",
+            padding: "12px 24px",
+            fontSize: "14px",
+            fontWeight: "600",
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+            boxShadow: "0 4px 12px rgba(0, 123, 255, 0.3)",
+            transition: "all 0.3s ease",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = "translateY(-2px)";
+            e.currentTarget.style.boxShadow =
+              "0 6px 20px rgba(0, 123, 255, 0.4)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = "translateY(0)";
+            e.currentTarget.style.boxShadow =
+              "0 4px 12px rgba(0, 123, 255, 0.3)";
+          }}
+        >
+          <span style={{ fontSize: "16px" }}>🤖</span>
+          채팅 내역 분석하기 (AI)
+        </button>
       </div>
     </div>
   );

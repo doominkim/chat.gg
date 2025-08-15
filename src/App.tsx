@@ -5,6 +5,7 @@ import Dashboard from "./pages/Dashboard";
 import UserDetail from "./pages/UserDetail";
 import Archive from "./pages/Archive";
 import NotFoundUser from "./pages/NotFoundUser";
+import ChatAnalysis from "./pages/ChatAnalysis";
 import UserList from "./pages/UserList";
 import UserSelect from "./pages/UserSelect";
 import "@cloudscape-design/global-styles/index.css";
@@ -27,6 +28,7 @@ const App: React.FC = () => {
           <Route path="/user-select" element={<UserSelect />} />
           <Route path="/user/:nickname" element={<UserDetail />} />
           <Route path="/archive" element={<Archive />} />
+          <Route path="/chat-analysis" element={<ChatAnalysis />} />
           <Route path="/not-found" element={<NotFoundUser />} />
         </Routes>
       </Layout>
