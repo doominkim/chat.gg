@@ -377,7 +377,6 @@ const UserDetail: React.FC = () => {
       params.to = new Date(end);
     }
 
-    console.log("UserDetail - chatFilterParams 생성:", params);
     return params;
   }, [userIdHash, start, end]);
 

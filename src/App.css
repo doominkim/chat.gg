@@ -7,3 +7,92 @@
   left: 0 !important;
   right: 0 !important;
 }
+
+/* Chat History Styles */
+.chat-history-page {
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.chat-filter {
+  background: #f5f5f5;
+  padding: 20px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+.filter-row {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.filter-row input,
+.filter-row select {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.chat-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.chat-item {
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 15px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.chat-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.nickname {
+  font-weight: bold;
+  color: #333;
+}
+
+.timestamp {
+  font-size: 12px;
+  color: #666;
+}
+
+.chat-content {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.message {
+  flex: 1;
+  word-break: break-word;
+}
+
+.badges {
+  display: flex;
+  gap: 5px;
+}
+
+.badge-icon {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+}
+
+.chat-type {
+  font-size: 12px;
+  color: #888;
+  text-transform: uppercase;
+}

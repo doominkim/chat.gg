@@ -7,7 +7,7 @@ interface UseApiState<T> {
   error: ApiError | null;
 }
 
-interface UseApiReturn<T> extends UseApiState<T> {
+export interface UseApiReturn<T> extends UseApiState<T> {
   refetch: () => Promise<void>;
   setData: (data: T) => void;
 }
