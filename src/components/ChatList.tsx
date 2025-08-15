@@ -174,6 +174,8 @@ export function ChatList({ params = {} }: ChatListProps) {
       content += `닉네임: ${nickname}\n`;
       content += `타입: ${chatType}\n`;
       if (chat.channelName) content += `채널: ${chat.channelName}\n`;
+      if (chat.payAmount)
+        content += `금액: ${chat.payAmount.toLocaleString()}원\n`;
       content += `메시지: ${message}\n`;
 
       // 뱃지 정보 추가
@@ -533,6 +535,27 @@ export function ChatList({ params = {} }: ChatListProps) {
                   >
                     {chat.message || "메시지 없음"}
                   </span>
+
+                  {/* DONATION 타입일 때 금액 표시 */}
+                  {chat.chatType === "DONATION" && chat.payAmount && (
+                    <div
+                      style={{
+                        background: "rgba(255, 255, 255, 0.2)",
+                        color: "white",
+                        padding: "4px 8px",
+                        borderRadius: "8px",
+                        fontSize: "12px",
+                        fontWeight: "600",
+                        border: "1px solid rgba(255, 255, 255, 0.3)",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "4px",
+                      }}
+                    >
+                      <span style={{ fontSize: "10px" }}>💰</span>
+                      {chat.payAmount.toLocaleString()}원
+                    </div>
+                  )}
                 </div>
                 {chat.chatType !== "CHAT" && (
                   <div

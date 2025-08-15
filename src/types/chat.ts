@@ -26,6 +26,7 @@ export interface ChatMessage {
   badge: UserBadge[];
   channelName?: string;
   channelImageUrl?: string;
+  payAmount?: number;
 }
 
 export interface FindChatParams {
