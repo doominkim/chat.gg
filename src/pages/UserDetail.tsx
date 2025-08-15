@@ -24,6 +24,7 @@ import type {
   UserWordFrequencyItem,
   UserChatTypeDistributionItem,
   WatchedStreamerItem,
+  StreamerResponse,
 } from "../api/services/userDetailService";
 import type { ApiResponse } from "../api/client";
 import type { FindChatParams } from "../types/chat";
@@ -200,7 +201,7 @@ const UserDetail: React.FC = () => {
   >(chatTypeApiCall, [chatTypeApiCall]);
 
   const { data: watchedStreamersData, loading: watchedStreamersLoading } =
-    useApi<WatchedStreamerItem[]>(watchedStreamersApiCall, [
+    useApi<StreamerResponse>(watchedStreamersApiCall, [
       watchedStreamersApiCall,
     ]);
 
@@ -351,6 +352,18 @@ const UserDetail: React.FC = () => {
   }, [chatTypeData]);
 
   const topStreamersData = useMemo(() => {
+    // 새로운 API 응답 구조 사용
+    if (watchedStreamersData?.data?.streamers) {
+      return watchedStreamersData.data.streamers.map((streamer) => ({
+        name: streamer.channelName,
+        count: streamer.chatCount || 0,
+        percentage: streamer.watchTime || 0,
+        rank: streamer.rank,
+        lastWatched: streamer.lastWatched,
+      }));
+    }
+
+    // 기존 API 응답 구조 (fallback)
     const items = Array.isArray(watchedStreamersData)
       ? watchedStreamersData
       : [];

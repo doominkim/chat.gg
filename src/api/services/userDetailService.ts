@@ -62,6 +62,29 @@ export interface UserChatTypeDistributionItem {
   percentage?: number;
 }
 
+export interface Streamer {
+  rank: number;
+  channelId: number;
+  channelName: string;
+  chatCount: number | null;
+  watchTime: number | null;
+  lastWatched: string;
+}
+
+export interface StreamerData {
+  streamers: Streamer[];
+  totalStreamers: number;
+  totalWatchTime: number | null;
+}
+
+export interface StreamerResponse {
+  message: string;
+  timestamp: string;
+  userId: string;
+  date: string;
+  data: StreamerData;
+}
+
 export interface WatchedStreamerItem {
   name: string;
   count: number;
@@ -127,7 +150,7 @@ export const userDetailService = {
   async getUserWatchedStreamers(
     userId: string,
     params?: { start?: string; end?: string; topN?: number }
-  ): Promise<ApiResponse<WatchedStreamerItem[]>> {
+  ): Promise<ApiResponse<StreamerResponse>> {
     const qs = new URLSearchParams();
     if (params?.start) qs.set("start", params.start);
     if (params?.end) qs.set("end", params.end);
@@ -135,6 +158,21 @@ export const userDetailService = {
     const endpoint = qs.toString()
       ? `/user/${encodeURIComponent(userId)}/watched-streamers?${qs}`
       : `/user/${encodeURIComponent(userId)}/watched-streamers`;
-    return apiClient.get<WatchedStreamerItem[]>(endpoint);
+    console.log(
+      "userDetailService.getUserWatchedStreamers API 호출:",
+      endpoint
+    );
+
+    try {
+      const response = await apiClient.get<StreamerResponse>(endpoint);
+      console.log(
+        "userDetailService.getUserWatchedStreamers API 응답:",
+        response
+      );
+      return response;
+    } catch (error) {
+      console.error("시청 스트리머 API 호출 실패:", error);
+      throw error;
+    }
   },
 };
