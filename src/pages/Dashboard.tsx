@@ -313,7 +313,7 @@ export default function Dashboard() {
   const chatCountData = hourlyData?.data?.hourlyData
     ? hourlyData.data.hourlyData.map((item) => ({
         x: new Date(
-          `${hourlyData.date}T${String(item.hour).padStart(2, "0")}:00:00+09:00`
+          `${today}T${String(item.hour).padStart(2, "0")}:00:00+09:00`
         ),
         y: item.chatTypes.chat,
       }))
@@ -322,7 +322,7 @@ export default function Dashboard() {
   const blindCountData = hourlyData?.data?.hourlyData
     ? hourlyData.data.hourlyData.map((item) => ({
         x: new Date(
-          `${hourlyData.date}T${String(item.hour).padStart(2, "0")}:00:00+09:00`
+          `${today}T${String(item.hour).padStart(2, "0")}:00:00+09:00`
         ),
         y: item.chatTypes.blind,
       }))
@@ -331,7 +331,7 @@ export default function Dashboard() {
   const donationCountData = hourlyData?.data?.hourlyData
     ? hourlyData.data.hourlyData.map((item) => ({
         x: new Date(
-          `${hourlyData.date}T${String(item.hour).padStart(2, "0")}:00:00+09:00`
+          `${today}T${String(item.hour).padStart(2, "0")}:00:00+09:00`
         ),
         y: item.chatTypes.donation,
       }))
@@ -346,9 +346,10 @@ export default function Dashboard() {
     hourlyData?.data?.summary?.peakHour !== undefined
       ? {
           x: new Date(
-            `${hourlyData.date}T${String(
-              hourlyData.data.summary.peakHour
-            ).padStart(2, "0")}:00:00+09:00`
+            `${today}T${String(hourlyData.data.summary.peakHour).padStart(
+              2,
+              "0"
+            )}:00:00+09:00`
           ),
           y: hourlyData.data.summary.peakChats,
         }
@@ -679,17 +680,10 @@ export default function Dashboard() {
           ) : (
             <LineChart
               series={lineChartSeries}
-              xDomain={
-                hourlyData?.date
-                  ? [
-                      new Date(`${hourlyData.date}T00:00:00+09:00`), // 해당 날짜 00:00:00
-                      new Date(`${hourlyData.date}T23:59:59+09:00`), // 해당 날짜 23:59:59
-                    ]
-                  : [
-                      todayAtKST(0, 0, 0), // 오늘 00:00:00
-                      todayAtKST(23, 59, 59), // 오늘 23:59:59
-                    ]
-              }
+              xDomain={[
+                todayAtKST(0, 0, 0), // 오늘 00:00:00
+                todayAtKST(23, 59, 59), // 오늘 23:59:59
+              ]}
               yDomain={[0, Math.ceil(maxY / 100) * 100]}
               height={300}
               xScaleType="time"
@@ -697,12 +691,10 @@ export default function Dashboard() {
               yTitle="채팅 수"
               hideFilter
               ariaLabel="채팅 수 라인 차트"
+              xTickFormatter={(date) => `${date.getHours()}시`}
               detailPopoverSeriesContent={({ series, x, y }) => ({
                 key: `🌟 ${series.title}`,
-                value: `${y}개 (${x.toLocaleTimeString("ko-KR", {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })})`,
+                value: `${y}개 (${x.getHours()}시)`,
               })}
             />
           )}

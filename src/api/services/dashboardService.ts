@@ -63,7 +63,6 @@ export interface MessageData {
 export interface HourlyChatTypeDistribution {
   message: string;
   timestamp: string;
-  date: string;
   data: {
     hourlyData: Array<{
       hour: number;
