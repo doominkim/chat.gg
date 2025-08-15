@@ -32,6 +32,15 @@ export function ChatList({ params = {} }: ChatListProps) {
     return () => clearInterval(interval);
   }, [refetch]);
 
+  // 컴포넌트 마운트 시 맨 아래로 스크롤
+  useEffect(() => {
+    if (Array.isArray(chats) && chats.length > 0) {
+      setTimeout(() => {
+        scrollToBottom();
+      }, 200);
+    }
+  }, []);
+
   // 스크롤 위치 감지
   useEffect(() => {
     const chatList = chatListRef.current;
@@ -39,7 +48,7 @@ export function ChatList({ params = {} }: ChatListProps) {
 
     const handleScroll = () => {
       const { scrollTop, scrollHeight, clientHeight } = chatList;
-      const isAtBottom = scrollTop + clientHeight >= scrollHeight - 10;
+      const isAtBottom = scrollTop + clientHeight >= scrollHeight - 20;
       setIsScrolledToBottom(isAtBottom);
     };
 
@@ -47,17 +56,40 @@ export function ChatList({ params = {} }: ChatListProps) {
     return () => chatList.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // 새 메시지 카운트 관리
+  // 새 메시지 카운트 관리 및 자동 스크롤
   useEffect(() => {
     if (Array.isArray(chats)) {
       const currentLength = chats.length;
       const previousLength = previousChatsLength.current;
 
+      console.log("새 메시지 감지:", {
+        currentLength,
+        previousLength,
+        isScrolledToBottom,
+        newMessageCount
+      });
+
       if (previousLength > 0 && currentLength > previousLength) {
         const newCount = currentLength - previousLength;
+        console.log("새 메시지 개수:", newCount);
+        
         if (!isScrolledToBottom) {
-          setNewMessageCount((prev) => prev + newCount);
+          setNewMessageCount((prev) => {
+            const updated = prev + newCount;
+            console.log("새 메시지 카운트 업데이트:", { prev, newCount, updated });
+            return updated;
+          });
+        } else {
+          // 스크롤이 맨 아래에 있으면 자동으로 새 메시지로 스크롤
+          setTimeout(() => {
+            scrollToBottom();
+          }, 100);
         }
+      } else if (previousLength === 0 && currentLength > 0) {
+        // 첫 로딩 시 맨 아래로 스크롤
+        setTimeout(() => {
+          scrollToBottom();
+        }, 100);
       }
 
       previousChatsLength.current = currentLength;
@@ -67,8 +99,14 @@ export function ChatList({ params = {} }: ChatListProps) {
   // 스크롤을 맨 아래로 이동
   const scrollToBottom = () => {
     if (chatListRef.current) {
-      chatListRef.current.scrollTop = chatListRef.current.scrollHeight;
+      const chatList = chatListRef.current;
+      chatList.scrollTop = chatList.scrollHeight;
       setNewMessageCount(0);
+      console.log("스크롤을 맨 아래로 이동:", {
+        scrollTop: chatList.scrollTop,
+        scrollHeight: chatList.scrollHeight,
+        clientHeight: chatList.clientHeight,
+      });
     }
   };
 
@@ -204,6 +242,8 @@ export function ChatList({ params = {} }: ChatListProps) {
           overflowY: "auto",
           border: "1px solid #e9ecef",
           boxShadow: "0 2px 8px rgba(0, 0, 0, 0.04)",
+          scrollbarWidth: "thin",
+          scrollbarColor: "#e9ecef #ffffff",
         }}
       >
         {chats.map((chat: ChatMessage, index: number) => {

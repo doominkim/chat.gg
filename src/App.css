@@ -60,6 +60,30 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
+/* 스크롤바 스타일 - 화이트 테마 */
+.chat-list::-webkit-scrollbar {
+  width: 8px;
+}
+
+.chat-list::-webkit-scrollbar-track {
+  background: #f8f9fa;
+  border-radius: 4px;
+}
+
+.chat-list::-webkit-scrollbar-thumb {
+  background: #dee2e6;
+  border-radius: 4px;
+  border: 1px solid #f8f9fa;
+}
+
+.chat-list::-webkit-scrollbar-thumb:hover {
+  background: #adb5bd;
+}
+
+.chat-list::-webkit-scrollbar-thumb:active {
+  background: #6c757d;
+}
+
 .chat-item {
   display: flex;
   flex-direction: column;
