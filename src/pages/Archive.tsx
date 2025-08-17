@@ -33,7 +33,7 @@ const fmtNumber = (n: number) => n.toLocaleString("ko-KR");
 // deltaPercent(양수/음수)에 따라 뱃지 색/기호를 그대로 표시
 const badgeFromDelta = (deltaPercent: number) => {
   const arrow = deltaPercent >= 0 ? "▲" : "▼";
-  const color = deltaPercent > 0 ? "red" : deltaPercent < 0 ? "green" : "blue";
+  const color = deltaPercent > 0 ? "blue" : deltaPercent < 0 ? "red" : "green";
   const pct = Math.abs(deltaPercent).toFixed(1).replace(/\.0$/, "");
   return { arrow, color: color as "red" | "green" | "blue", pct };
 };
@@ -229,16 +229,19 @@ export default function Archive() {
           title: "채팅",
           value: chatTypeData.data.distribution?.chat.count ?? 0,
           lastUpdate: new Date().toLocaleString("ko-KR"),
-        },
-        {
-          title: "후원",
-          value: chatTypeData.data.distribution?.donation.count ?? 0,
-          lastUpdate: new Date().toLocaleString("ko-KR"),
+          color: "#0073bb",
         },
         {
           title: "블라인드",
           value: chatTypeData.data.distribution?.blind.count ?? 0,
           lastUpdate: new Date().toLocaleString("ko-KR"),
+          color: "#ff9900",
+        },
+        {
+          title: "후원",
+          value: chatTypeData.data.distribution?.donation.count ?? 0,
+          lastUpdate: new Date().toLocaleString("ko-KR"),
+          color: "#d13212",
         },
       ]
     : [
@@ -246,59 +249,96 @@ export default function Archive() {
           title: "채팅",
           value: 0,
           lastUpdate: new Date().toLocaleString("ko-KR"),
-        },
-        {
-          title: "후원",
-          value: 0,
-          lastUpdate: new Date().toLocaleString("ko-KR"),
+          color: "#0073bb",
         },
         {
           title: "블라인드",
           value: 0,
           lastUpdate: new Date().toLocaleString("ko-KR"),
+          color: "#ff9900",
+        },
+        {
+          title: "후원",
+          value: 0,
+          lastUpdate: new Date().toLocaleString("ko-KR"),
+          color: "#d13212",
         },
       ];
 
-  // Line - 시간대별 채팅 수 API 데이터
-  const hourlyLineData = hourlyData?.data?.hourlyData
+  // Line - 시간대별 채팅 수 API 데이터 (대시보드와 동일한 구조)
+  const chatCountData = hourlyData?.data?.hourlyData
     ? hourlyData.data.hourlyData.map((item) => ({
         x: new Date(
           `${selectedDate}T${String(item.hour).padStart(2, "0")}:00:00+09:00`
         ),
-        y: item.chatTypes.chat + item.chatTypes.donation + item.chatTypes.blind,
+        y: item.chatTypes.chat,
       }))
     : [];
 
-  const maxY = hourlyLineData.length
-    ? Math.max(...hourlyLineData.map((d) => d.y))
-    : 0;
-  const peakPoint = hourlyLineData.length
-    ? hourlyLineData.reduce((a, b) => (a.y >= b.y ? a : b))
-    : null;
-
-  const thresholdSeries = peakPoint
-    ? [{ title: "피크 시간대", type: "threshold" as const, x: peakPoint.x }]
+  const blindCountData = hourlyData?.data?.hourlyData
+    ? hourlyData.data.hourlyData.map((item) => ({
+        x: new Date(
+          `${selectedDate}T${String(item.hour).padStart(2, "0")}:00:00+09:00`
+        ),
+        y: item.chatTypes.blind,
+      }))
     : [];
 
+  const donationCountData = hourlyData?.data?.hourlyData
+    ? hourlyData.data.hourlyData.map((item) => ({
+        x: new Date(
+          `${selectedDate}T${String(item.hour).padStart(2, "0")}:00:00+09:00`
+        ),
+        y: item.chatTypes.donation,
+      }))
+    : [];
+
+  // 최대값 계산 (모든 시리즈 중 최대값)
+  const allData = [...chatCountData, ...blindCountData, ...donationCountData];
+  const maxY = allData.length > 0 ? Math.max(...allData.map((d) => d.y)) : 0;
+
+  // 피크 포인트 계산
+  const peakPoint =
+    hourlyData?.data?.summary?.peakHour !== undefined
+      ? {
+          x: new Date(
+            `${selectedDate}T${String(
+              hourlyData.data.summary.peakHour
+            ).padStart(2, "0")}:00:00+09:00`
+          ),
+          y: hourlyData.data.summary.peakChats,
+        }
+      : null;
+
+  // LineChart 시리즈 구성 (채팅, 블라인드, 후원, 피크 시간대)
+  const lineChartSeries = [
+    { title: "채팅", type: "line" as const, data: chatCountData },
+    { title: "블라인드", type: "line" as const, data: blindCountData },
+    { title: "후원", type: "line" as const, data: donationCountData },
+    ...(peakPoint
+      ? [{ title: "피크 시간대", type: "threshold" as const, x: peakPoint.x }]
+      : []),
+  ];
+
   // Top 10 - 실시간 채팅 랭킹 API 데이터
-  const userChatCountData = chatRankingData?.data?.ranking
-    ? chatRankingData.data.ranking.map((item) => ({
+  const userChatCountData = chatRankingData?.ranking
+    ? chatRankingData.ranking.map((item) => ({
         name: item.username,
         count: item.chatCount,
       }))
     : [];
 
   // 치즈 랭킹 - 후원 스트리머 랭킹 API 데이터
-  const streamerDonationData = donationStreamerData?.data?.ranking
-    ? donationStreamerData.data.ranking.map((item) => ({
+  const streamerDonationData = donationStreamerData?.ranking
+    ? donationStreamerData.ranking.map((item) => ({
         x: item.streamerName,
         y: item.receivedCheese,
       }))
     : [];
 
   // 치즈 랭킹 - 도네이션 랭킹 API 데이터
-  const userDonationData = donationDonorData?.data?.ranking
-    ? donationDonorData.data.ranking.map((item) => ({
+  const userDonationData = donationDonorData?.ranking
+    ? donationDonorData.ranking.map((item) => ({
         x: item.username,
         y: item.donatedCheese,
       }))
@@ -473,34 +513,22 @@ export default function Archive() {
             </Box>
           ) : (
             <LineChart
-              series={[
-                { title: "Chat count", type: "line", data: hourlyLineData },
-                ...thresholdSeries,
+              series={lineChartSeries}
+              xDomain={[
+                new Date(`${selectedDate}T00:00:00+09:00`), // 선택된 날짜 00:00:00
+                new Date(`${selectedDate}T23:59:59+09:00`), // 선택된 날짜 23:59:59
               ]}
-              xDomain={
-                hourlyLineData.length
-                  ? [
-                      hourlyLineData[0].x,
-                      hourlyLineData[hourlyLineData.length - 1].x,
-                    ]
-                  : [
-                      new Date(`${selectedDate}T00:00:00+09:00`),
-                      new Date(`${selectedDate}T23:59:59+09:00`),
-                    ]
-              }
-              yDomain={[0, Math.max(100, Math.ceil((maxY || 0) / 100) * 100)]}
+              yDomain={[0, Math.ceil(maxY / 100) * 100]}
               height={300}
               xScaleType="time"
               xTitle="시간 (한국 기준)"
               yTitle="채팅 수"
               hideFilter
               ariaLabel="채팅 수 라인 차트"
+              xTickFormatter={(date) => `${date.getHours()}시`}
               detailPopoverSeriesContent={({ series, x, y }) => ({
                 key: `🌟 ${series.title}`,
-                value: `${y}개 (${x.toLocaleTimeString("ko-KR", {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })})`,
+                value: `${y}개 (${x.getHours()}시)`,
               })}
             />
           )}
@@ -525,130 +553,143 @@ export default function Archive() {
             </Box>
           ) : (
             <SpaceBetween size="xxs">
-              {[...userChatCountData]
-                .sort((a, b) => b.count - a.count)
-                .slice(0, 10)
-                .map((user, index) => {
-                  const rank = index + 1;
-                  const rankIcon = rank <= 3 ? ["🥇", "🥈", "🥉"][index] : null;
-                  const rankColor =
-                    rank <= 3 ? "#FFD700" : rank <= 10 ? "#C0C0C0" : "#CD7F32";
+              {userChatCountData.length > 0 ? (
+                [...userChatCountData]
+                  .sort((a, b) => b.count - a.count)
+                  .slice(0, 10)
+                  .map((user, index) => {
+                    const rank = index + 1;
+                    const rankIcon =
+                      rank <= 3 ? ["🥇", "🥈", "🥉"][index] : null;
+                    const rankColor =
+                      rank <= 3
+                        ? "#FFD700"
+                        : rank <= 10
+                        ? "#C0C0C0"
+                        : "#CD7F32";
 
-                  return (
-                    <div
-                      key={user.name}
-                      style={{
-                        width: "100%",
-                        padding: "8px 12px",
-                        border: "1px solid #e9ecef",
-                        borderRadius: "8px",
-                        background:
-                          rank <= 3
-                            ? "linear-gradient(135deg, #fff9e6, #fff5d6)"
-                            : "#ffffff",
-                        transition: "all 0.2s ease",
-                        marginBottom: "4px",
-                        boxSizing: "border-box",
-                        cursor: "pointer",
-                      }}
-                      onClick={() => handleUserClick(user.name)}
-                      onMouseEnter={(e: React.MouseEvent<HTMLDivElement>) => {
-                        e.currentTarget.style.transform = "translateY(-2px)";
-                        e.currentTarget.style.boxShadow =
-                          "0 4px 12px rgba(0,0,0,0.1)";
-                      }}
-                      onMouseLeave={(e: React.MouseEvent<HTMLDivElement>) => {
-                        e.currentTarget.style.transform = "translateY(0)";
-                        e.currentTarget.style.boxShadow = "none";
-                      }}
-                    >
+                    return (
                       <div
+                        key={user.name}
                         style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "8px",
                           width: "100%",
+                          padding: "8px 12px",
+                          border: "1px solid #e9ecef",
+                          borderRadius: "8px",
+                          background:
+                            rank <= 3
+                              ? "linear-gradient(135deg, #fff9e6, #fff5d6)"
+                              : "#ffffff",
+                          transition: "all 0.2s ease",
+                          marginBottom: "4px",
+                          boxSizing: "border-box",
+                          cursor: "pointer",
+                        }}
+                        onClick={() => handleUserClick(user.name)}
+                        onMouseEnter={(e: React.MouseEvent<HTMLDivElement>) => {
+                          e.currentTarget.style.transform = "translateY(-2px)";
+                          e.currentTarget.style.boxShadow =
+                            "0 4px 12px rgba(0,0,0,0.1)";
+                        }}
+                        onMouseLeave={(e: React.MouseEvent<HTMLDivElement>) => {
+                          e.currentTarget.style.transform = "translateY(0)";
+                          e.currentTarget.style.boxShadow = "none";
                         }}
                       >
-                        {/* 순위 */}
                         <div
                           style={{
                             display: "flex",
                             alignItems: "center",
-                            minWidth: "50px",
-                            flexShrink: 0,
+                            gap: "8px",
+                            width: "100%",
                           }}
                         >
-                          {rankIcon ? (
-                            <span
-                              style={{ fontSize: "24px", marginRight: "8px" }}
-                            >
-                              {rankIcon}
-                            </span>
-                          ) : (
+                          {/* 순위 */}
+                          <div
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              minWidth: "50px",
+                              flexShrink: 0,
+                            }}
+                          >
+                            {rankIcon ? (
+                              <span
+                                style={{ fontSize: "24px", marginRight: "8px" }}
+                              >
+                                {rankIcon}
+                              </span>
+                            ) : (
+                              <div
+                                style={{
+                                  width: "24px",
+                                  height: "24px",
+                                  borderRadius: "50%",
+                                  background:
+                                    rankColor === "#FFD700"
+                                      ? "#fff3cd"
+                                      : "#f8f9fa",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  border: `2px solid ${rankColor}`,
+                                  fontSize: "12px",
+                                  fontWeight: "bold",
+                                  color: rankColor,
+                                }}
+                              >
+                                {rank}
+                              </div>
+                            )}
+                          </div>
+
+                          {/* 사용자 정보 */}
+                          <div
+                            style={{ flex: 1, minWidth: 0, overflow: "hidden" }}
+                          >
                             <div
                               style={{
-                                width: "24px",
-                                height: "24px",
-                                borderRadius: "50%",
-                                background:
-                                  rankColor === "#FFD700"
-                                    ? "#fff3cd"
-                                    : "#f8f9fa",
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                border: `2px solid ${rankColor}`,
-                                fontSize: "12px",
                                 fontWeight: "bold",
-                                color: rankColor,
+                                fontSize: "16px",
+                                color: "#495057",
+                                whiteSpace: "nowrap",
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
                               }}
                             >
-                              {rank}
+                              {user.name}
                             </div>
-                          )}
-                        </div>
-
-                        {/* 사용자 정보 */}
-                        <div
-                          style={{ flex: 1, minWidth: 0, overflow: "hidden" }}
-                        >
-                          <div
-                            style={{
-                              fontWeight: "bold",
-                              fontSize: "16px",
-                              color: "#495057",
-                              whiteSpace: "nowrap",
-                              overflow: "hidden",
-                              textOverflow: "ellipsis",
-                            }}
-                          >
-                            {user.name}
                           </div>
-                        </div>
 
-                        {/* 채팅 수 */}
-                        <div
-                          style={{
-                            textAlign: "right",
-                            minWidth: "70px",
-                            flexShrink: 0,
-                          }}
-                        >
+                          {/* 채팅 수 */}
                           <div
                             style={{
-                              fontSize: "16px",
-                              fontWeight: "bold",
-                              color: "#007bff",
+                              textAlign: "right",
+                              minWidth: "70px",
+                              flexShrink: 0,
                             }}
                           >
-                            {user.count.toLocaleString()}
+                            <div
+                              style={{
+                                fontSize: "16px",
+                                fontWeight: "bold",
+                                color: "#007bff",
+                              }}
+                            >
+                              {user.count.toLocaleString()}
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })
+              ) : (
+                <Box textAlign="center" padding="xl">
+                  <Box fontSize="heading-m" color="text-status-info">
+                    해당 날짜의 랭킹 데이터가 없습니다.
+                  </Box>
+                </Box>
+              )}
             </SpaceBetween>
           )}
         </Container>
@@ -671,7 +712,7 @@ export default function Archive() {
                 스트리머 랭킹 데이터 로드 중 오류가 발생했습니다.
               </Box>
             </Box>
-          ) : (
+          ) : streamerDonationData.length > 0 ? (
             <BarChart
               series={[
                 { title: "받은 🧀", type: "bar", data: streamerDonationData },
@@ -683,6 +724,12 @@ export default function Archive() {
               hideFilter
               ariaLabel="Streamer donation ranking chart"
             />
+          ) : (
+            <Box textAlign="center" padding="xl">
+              <Box fontSize="heading-m" color="text-status-info">
+                해당 날짜의 스트리머 랭킹 데이터가 없습니다.
+              </Box>
+            </Box>
           )}
         </Container>
 
@@ -699,7 +746,7 @@ export default function Archive() {
                 도네이션 랭킹 데이터 로드 중 오류가 발생했습니다.
               </Box>
             </Box>
-          ) : (
+          ) : userDonationData.length > 0 ? (
             <BarChart
               series={[
                 { title: "보낸 🧀", type: "bar", data: userDonationData },
@@ -711,6 +758,12 @@ export default function Archive() {
               hideFilter
               ariaLabel="User donation ranking chart"
             />
+          ) : (
+            <Box textAlign="center" padding="xl">
+              <Box fontSize="heading-m" color="text-status-info">
+                해당 날짜의 도네이션 랭킹 데이터가 없습니다.
+              </Box>
+            </Box>
           )}
         </Container>
       </Grid>
