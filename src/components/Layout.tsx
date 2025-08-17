@@ -115,10 +115,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             navigate("/dashboard");
           },
         }}
-        utilities={[
-          { type: "button", text: "Ranking", href: "/user-rank" },
-          { type: "button", text: "Archive", href: "/archive" },
-        ]}
+        utilities={[{ type: "button", text: "Archive", href: "/archive" }]}
         search={
           <FormField errorText={status || undefined}>
             <Autosuggest

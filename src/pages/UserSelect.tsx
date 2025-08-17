@@ -30,7 +30,7 @@ export default function UserSelect() {
 
   React.useEffect(() => {
     if (!state || !state.users) {
-      navigate("/user-rank");
+      navigate("/dashboard");
     }
   }, [navigate, state]);
 
@@ -60,7 +60,7 @@ export default function UserSelect() {
   };
 
   const handleBackToSearch = () => {
-    navigate(`/user-rank?search=${encodeURIComponent(searchTerm)}`);
+    navigate(`/dashboard`);
   };
 
   return (

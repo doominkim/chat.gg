@@ -13,34 +13,31 @@ import {
 export default function NotFoundUser() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  
+
   // URL 파라미터에서 검색한 닉네임 가져오기
-  const searchedNickname = searchParams.get('nickname') || '알 수 없는 사용자';
+  const searchedNickname = searchParams.get("nickname") || "알 수 없는 사용자";
 
   const handleGoBack = () => {
     navigate(-1); // 이전 페이지로 돌아가기
   };
 
   const handleGoToUserList = () => {
-    navigate('/user-rank'); // 유저 랭킹 페이지로 이동
+    navigate("/dashboard"); // 대시보드로 이동
   };
 
   const handleGoToDashboard = () => {
-    navigate('/dashboard'); // 대시보드로 이동
+    navigate("/dashboard"); // 대시보드로 이동
   };
 
   return (
     <Container
-      header={
-        <Header variant="h1">
-          🔍 사용자를 찾을 수 없습니다
-        </Header>
-      }
+      header={<Header variant="h1">🔍 사용자를 찾을 수 없습니다</Header>}
     >
       <SpaceBetween direction="vertical" size="l">
         <Alert type="warning" header="검색 결과가 없습니다">
           <Box variant="p">
-            '<strong>{searchedNickname}</strong>' 닉네임을 가진 사용자를 찾을 수 없습니다.
+            '<strong>{searchedNickname}</strong>' 닉네임을 가진 사용자를 찾을 수
+            없습니다.
           </Box>
           <Box variant="p" color="text-body-secondary">
             다음을 확인해보세요:
@@ -58,7 +55,7 @@ export default function NotFoundUser() {
               ← 이전 페이지
             </Button>
             <Button onClick={handleGoToUserList} variant="primary">
-              📊 유저 랭킹 보기
+              📊 대시보드로 이동
             </Button>
             <Button onClick={handleGoToDashboard} variant="normal">
               🏠 대시보드로 가기
@@ -70,12 +67,8 @@ export default function NotFoundUser() {
           <Box variant="h3" color="text-body-secondary" margin={{ top: "l" }}>
             💡 도움말
           </Box>
-          <Box variant="p">
-            • 유저 랭킹 페이지에서 활발한 사용자들을 확인할 수 있습니다
-          </Box>
-          <Box variant="p">
-            • 검색창의 자동완성 기능을 활용해보세요
-          </Box>
+          <Box variant="p">• 대시보드에서 전체 통계를 확인할 수 있습니다</Box>
+          <Box variant="p">• 검색창의 자동완성 기능을 활용해보세요</Box>
         </Box>
       </SpaceBetween>
     </Container>

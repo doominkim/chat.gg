@@ -6,7 +6,6 @@ import UserDetail from "./pages/UserDetail";
 import Archive from "./pages/Archive";
 import NotFoundUser from "./pages/NotFoundUser";
 import ChatAnalysis from "./pages/ChatAnalysis";
-import UserList from "./pages/UserList";
 import UserSelect from "./pages/UserSelect";
 import "@cloudscape-design/global-styles/index.css";
 import {
@@ -24,7 +23,6 @@ const App: React.FC = () => {
           {/* 메인 진입 시 자동으로 /dashboard로 이동 */}
           <Route path="/" element={<Navigate to="/dashboard" />} />
           <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/user-rank" element={<UserList />} />
           <Route path="/user-select" element={<UserSelect />} />
           <Route path="/user/:nickname" element={<UserDetail />} />
           <Route path="/archive" element={<Archive />} />
