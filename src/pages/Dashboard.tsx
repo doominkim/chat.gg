@@ -1,5 +1,6 @@
 // src/pages/Dashboard.tsx
 import React, { useState, useEffect, useMemo, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Container,
   Header,
@@ -15,7 +16,7 @@ import {
 } from "@cloudscape-design/components";
 import type { FlashbarProps } from "@cloudscape-design/components";
 import { useApi } from "../api/hooks";
-import { dashboardService } from "../api/services";
+import { dashboardService, userService } from "../api/services";
 import type {
   DashboardOverview,
   ChatTypeDistribution,
@@ -131,6 +132,45 @@ const mapTopDonorsFromSummary = (res: SummaryResponse) =>
 
 // 컴포넌트 시작
 export default function Dashboard() {
+  const navigate = useNavigate();
+
+  const handleUserClick = async (userName: string) => {
+    try {
+      // 유저 검색 API 호출
+      const response = await userService.searchUsers({ nickname: userName });
+      const data = response.data;
+      const users = data.users || [];
+      const userIdHashes = data.userIdHashes || [];
+
+      if (userIdHashes.length === 0) {
+        // 유저를 찾을 수 없는 경우
+        navigate(`/not-found?nickname=${encodeURIComponent(userName)}`);
+      } else if (userIdHashes.length === 1) {
+        // 단일 유저인 경우 바로 상세 페이지로 이동
+        const hash = userIdHashes[0];
+        const name = users[0]?.name || userName;
+        navigate(
+          `/user/${encodeURIComponent(name)}?userIdHash=${encodeURIComponent(
+            hash
+          )}`
+        );
+      } else {
+        // 여러 유저인 경우 선택 페이지로 이동
+        navigate("/user-select", {
+          state: {
+            users,
+            userIdHashes,
+            searchTerm: userName,
+          },
+        });
+      }
+    } catch (error) {
+      console.error("User search failed:", error);
+      // 에러 발생 시 not-found 페이지로 이동
+      navigate(`/not-found?nickname=${encodeURIComponent(userName)}`);
+    }
+  };
+
   // 실시간 날짜 및 시간 표시 (요일 포함)
   const [currentTime, setCurrentTime] = useState(() => {
     const now = new Date();
@@ -783,7 +823,9 @@ export default function Dashboard() {
                         transition: "all 0.2s ease",
                         marginBottom: "4px",
                         boxSizing: "border-box",
+                        cursor: "pointer",
                       }}
+                      onClick={() => handleUserClick(user.name)}
                       onMouseEnter={(e: React.MouseEvent<HTMLDivElement>) => {
                         e.currentTarget.style.transform = "translateY(-2px)";
                         e.currentTarget.style.boxShadow =
