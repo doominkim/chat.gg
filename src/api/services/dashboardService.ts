@@ -18,6 +18,8 @@ export interface DashboardOverview {
     todayCheeseCountChange: number;
     todayPeakTime: string;
     yesterdayPeakTime: string;
+    activeChannelCount: number;
+    currentViewerCount: number;
   };
 }
 

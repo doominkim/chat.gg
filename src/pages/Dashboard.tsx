@@ -549,7 +549,14 @@ export default function Dashboard() {
       </Box>
 
       {/* 상단 요약 */}
-      <Grid gridDefinition={[{ colspan: 4 }, { colspan: 4 }, { colspan: 4 }]}>
+      <Grid
+        gridDefinition={[
+          { colspan: 3 },
+          { colspan: 3 },
+          { colspan: 3 },
+          { colspan: 3 },
+        ]}
+      >
         <Container
           fitHeight
           header={<Header variant="h2">💤 오늘의 누적 채팅수</Header>}
@@ -602,7 +609,7 @@ export default function Dashboard() {
         </Container>
         <Container
           fitHeight
-          header={<Header variant="h2">🕓 오늘의 피크시간</Header>}
+          header={<Header variant="h2">📺 수집중인 채널</Header>}
         >
           <SpaceBetween size="s">
             {loading ? (
@@ -616,11 +623,32 @@ export default function Dashboard() {
             ) : (
               <>
                 <Box fontSize="display-l" fontWeight="bold">
-                  {toHHmm(peakToday)}
+                  {fmtNumber(overviewData?.data?.activeChannelCount || 0)}
                 </Box>
-                <Badge color="blue">
-                  전일 {toHHmm(peakYesterdayH, peakYesterdayM ?? 0)}
-                </Badge>
+                <Badge color="blue">활성 채널</Badge>
+              </>
+            )}
+          </SpaceBetween>
+        </Container>
+        <Container
+          fitHeight
+          header={<Header variant="h2">👥 현재 시청자수</Header>}
+        >
+          <SpaceBetween size="s">
+            {loading ? (
+              <Box textAlign="center" padding="xl">
+                로딩 중...
+              </Box>
+            ) : error ? (
+              <Box textAlign="center" padding="xl" color="text-status-error">
+                오류: {err}
+              </Box>
+            ) : (
+              <>
+                <Box fontSize="display-l" fontWeight="bold">
+                  {fmtNumber(overviewData?.data?.currentViewerCount || 0)}
+                </Box>
+                <Badge color="green">실시간</Badge>
               </>
             )}
           </SpaceBetween>
