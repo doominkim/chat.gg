@@ -758,23 +758,127 @@ export default function Dashboard() {
               </Box>
             </Box>
           ) : (
-            <SpaceBetween size="s">
+            <SpaceBetween size="xxs">
               {[...userChatCountData]
                 .sort((a, b) => b.count - a.count)
+                .slice(0, 10)
                 .map((user, index) => {
-                  const rankIcon =
-                    ["🥇", "🥈", "🥉"][index] || `${index + 1}위`;
+                  const rank = index + 1;
+                  const rankIcon = rank <= 3 ? ["🥇", "🥈", "🥉"][index] : null;
+                  const rankColor =
+                    rank <= 3 ? "#FFD700" : rank <= 10 ? "#C0C0C0" : "#CD7F32";
+
                   return (
-                    <Box key={user.name} display="inline-block">
-                      <SpaceBetween direction="horizontal" size="m">
-                        <Box fontWeight="bold">
-                          {rankIcon} {user.name}
-                        </Box>
-                        <Box color="text-status-info" fontWeight="bold">
-                          {user.count.toLocaleString()}개
-                        </Box>
-                      </SpaceBetween>
-                    </Box>
+                    <div
+                      key={user.name}
+                      style={{
+                        width: "100%",
+                        padding: "8px 12px",
+                        border: "1px solid #e9ecef",
+                        borderRadius: "8px",
+                        background:
+                          rank <= 3
+                            ? "linear-gradient(135deg, #fff9e6, #fff5d6)"
+                            : "#ffffff",
+                        transition: "all 0.2s ease",
+                        marginBottom: "4px",
+                        boxSizing: "border-box",
+                      }}
+                      onMouseEnter={(e: React.MouseEvent<HTMLDivElement>) => {
+                        e.currentTarget.style.transform = "translateY(-2px)";
+                        e.currentTarget.style.boxShadow =
+                          "0 4px 12px rgba(0,0,0,0.1)";
+                      }}
+                      onMouseLeave={(e: React.MouseEvent<HTMLDivElement>) => {
+                        e.currentTarget.style.transform = "translateY(0)";
+                        e.currentTarget.style.boxShadow = "none";
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "8px",
+                          width: "100%",
+                        }}
+                      >
+                        {/* 순위 */}
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            minWidth: "50px",
+                            flexShrink: 0,
+                          }}
+                        >
+                          {rankIcon ? (
+                            <span
+                              style={{ fontSize: "24px", marginRight: "8px" }}
+                            >
+                              {rankIcon}
+                            </span>
+                          ) : (
+                            <div
+                              style={{
+                                width: "24px",
+                                height: "24px",
+                                borderRadius: "50%",
+                                background:
+                                  rankColor === "#FFD700"
+                                    ? "#fff3cd"
+                                    : "#f8f9fa",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                border: `2px solid ${rankColor}`,
+                                fontSize: "12px",
+                                fontWeight: "bold",
+                                color: rankColor,
+                              }}
+                            >
+                              {rank}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* 사용자 정보 */}
+                        <div
+                          style={{ flex: 1, minWidth: 0, overflow: "hidden" }}
+                        >
+                          <div
+                            style={{
+                              fontWeight: "bold",
+                              fontSize: "16px",
+                              color: "#495057",
+                              whiteSpace: "nowrap",
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                            }}
+                          >
+                            {user.name}
+                          </div>
+                        </div>
+
+                        {/* 채팅 수 */}
+                        <div
+                          style={{
+                            textAlign: "right",
+                            minWidth: "70px",
+                            flexShrink: 0,
+                          }}
+                        >
+                          <div
+                            style={{
+                              fontSize: "16px",
+                              fontWeight: "bold",
+                              color: "#007bff",
+                            }}
+                          >
+                            {user.count.toLocaleString()}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   );
                 })}
             </SpaceBetween>
