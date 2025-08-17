@@ -113,71 +113,44 @@ const AdBanner: React.FC<AdBannerProps> = ({
               position: "relative",
             }}
           >
-                         {/* 실제 광고와 유사한 이미지 */}
-             <div
-               style={{
-                 width: "100%",
-                 maxWidth: "728px",
-                 height: "90px",
-                 background: "linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)",
-                 border: "1px solid #e9ecef",
-                 borderRadius: "12px",
-                 display: "flex",
-                 alignItems: "center",
-                 justifyContent: "space-between",
-                 padding: "0 16px",
-                 boxShadow: "0 4px 20px rgba(0,0,0,0.08)",
-                 position: "relative",
-                 overflow: "hidden",
-                 boxSizing: "border-box",
-               }}
-             >
-              {/* 배경 장식 요소 */}
+            {/* 실제 광고와 유사한 이미지 */}
+            <div
+              style={{
+                width: "100%",
+                maxWidth: "728px",
+                height: "90px",
+                background: "linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)",
+                border: "1px solid #e9ecef",
+                borderRadius: "12px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                padding: "0 16px",
+                boxShadow: "0 4px 20px rgba(0,0,0,0.08)",
+                position: "relative",
+                overflow: "hidden",
+                boxSizing: "border-box",
+              }}
+            >
+              {/* 광고 이미지 영역 */}
               <div
                 style={{
-                  position: "absolute",
-                  top: "-20px",
-                  right: "-20px",
-                  width: "60px",
+                  width: "100px",
                   height: "60px",
                   background:
-                    "linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%)",
-                  borderRadius: "50%",
-                  zIndex: 0,
+                    "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                  borderRadius: "8px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: "20px",
+                  color: "white",
+                  flexShrink: 0,
+                  boxShadow: "0 2px 8px rgba(102, 126, 234, 0.3)",
+                  position: "relative",
+                  overflow: "hidden",
                 }}
-              />
-              <div
-                style={{
-                  position: "absolute",
-                  bottom: "-15px",
-                  left: "50px",
-                  width: "40px",
-                  height: "40px",
-                  background:
-                    "linear-gradient(135deg, rgba(255, 107, 107, 0.1) 0%, rgba(238, 90, 36, 0.1) 100%)",
-                  borderRadius: "50%",
-                  zIndex: 0,
-                }}
-              />
-                             {/* 광고 이미지 영역 */}
-               <div
-                 style={{
-                   width: "100px",
-                   height: "60px",
-                   background:
-                     "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-                   borderRadius: "8px",
-                   display: "flex",
-                   alignItems: "center",
-                   justifyContent: "center",
-                   fontSize: "20px",
-                   color: "white",
-                   flexShrink: 0,
-                   boxShadow: "0 2px 8px rgba(102, 126, 234, 0.3)",
-                   position: "relative",
-                   overflow: "hidden",
-                 }}
-               >
+              >
                 <div
                   style={{
                     position: "absolute",
@@ -193,95 +166,95 @@ const AdBanner: React.FC<AdBannerProps> = ({
                 <span style={{ zIndex: 1, fontWeight: "bold" }}>🎮</span>
               </div>
 
-                             {/* 광고 텍스트 영역 */}
-               <div
-                 style={{
-                   flex: 1,
-                   marginLeft: "12px",
-                   display: "flex",
-                   flexDirection: "column",
-                   justifyContent: "center",
-                   minWidth: 0, // 텍스트 오버플로우 방지
-                 }}
-               >
-                 <div
-                   style={{
-                     fontSize: "16px",
-                     fontWeight: "bold",
-                     color: "#1a1a1a",
-                     marginBottom: "4px",
-                     lineHeight: "1.2",
-                     textShadow: "0 1px 2px rgba(0,0,0,0.1)",
-                     whiteSpace: "nowrap",
-                     overflow: "hidden",
-                     textOverflow: "ellipsis",
-                   }}
-                 >
-                   🎮 치지직 채팅 분석 도구
-                 </div>
-                 <div
-                   style={{
-                     fontSize: "13px",
-                     color: "#666666",
-                     lineHeight: "1.3",
-                     marginBottom: "3px",
-                     whiteSpace: "nowrap",
-                     overflow: "hidden",
-                     textOverflow: "ellipsis",
-                   }}
-                 >
-                   실시간 채팅 통계와 분석을 한눈에 확인하세요
-                 </div>
-                 <div
-                   style={{
-                     fontSize: "11px",
-                     color: "#999999",
-                     display: "flex",
-                     alignItems: "center",
-                     gap: "6px",
-                     marginBottom: "3px",
-                     flexWrap: "wrap",
-                   }}
-                 >
-                   <span>⭐ 4.8/5.0</span>
-                   <span>•</span>
-                   <span>10,000+ 사용자</span>
-                   <span>•</span>
-                   <span>무료</span>
-                 </div>
-                 <div
-                   style={{
-                     fontSize: "9px",
-                     color: "#cccccc",
-                     fontStyle: "italic",
-                     borderTop: "1px solid #f0f0f0",
-                     paddingTop: "3px",
-                     marginTop: "3px",
-                   }}
-                 >
-                   Google AdSense 배너 광고
-                 </div>
-               </div>
+              {/* 광고 텍스트 영역 */}
+              <div
+                style={{
+                  flex: 1,
+                  marginLeft: "12px",
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "center",
+                  minWidth: 0, // 텍스트 오버플로우 방지
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: "16px",
+                    fontWeight: "bold",
+                    color: "#1a1a1a",
+                    marginBottom: "4px",
+                    lineHeight: "1.2",
+                    textShadow: "0 1px 2px rgba(0,0,0,0.1)",
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                  }}
+                >
+                  🎮 치지직 채팅 분석 도구
+                </div>
+                <div
+                  style={{
+                    fontSize: "13px",
+                    color: "#666666",
+                    lineHeight: "1.3",
+                    marginBottom: "3px",
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                  }}
+                >
+                  실시간 채팅 통계와 분석을 한눈에 확인하세요
+                </div>
+                <div
+                  style={{
+                    fontSize: "11px",
+                    color: "#999999",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "6px",
+                    marginBottom: "3px",
+                    flexWrap: "wrap",
+                  }}
+                >
+                  <span>⭐ 4.8/5.0</span>
+                  <span>•</span>
+                  <span>10,000+ 사용자</span>
+                  <span>•</span>
+                  <span>무료</span>
+                </div>
+                <div
+                  style={{
+                    fontSize: "9px",
+                    color: "#cccccc",
+                    fontStyle: "italic",
+                    borderTop: "1px solid #f0f0f0",
+                    paddingTop: "3px",
+                    marginTop: "3px",
+                  }}
+                >
+                  Google AdSense 배너 광고
+                </div>
+              </div>
 
-                             {/* CTA 버튼 */}
-               <div
-                 style={{
-                   background:
-                     "linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%)",
-                   color: "white",
-                   padding: "8px 16px",
-                   borderRadius: "20px",
-                   fontSize: "13px",
-                   fontWeight: "bold",
-                   cursor: "pointer",
-                   transition: "all 0.3s ease",
-                   flexShrink: 0,
-                   boxShadow: "0 4px 15px rgba(255, 107, 107, 0.3)",
-                   textAlign: "center",
-                   minWidth: "100px",
-                   position: "relative",
-                   overflow: "hidden",
-                 }}
+              {/* CTA 버튼 */}
+              <div
+                style={{
+                  background:
+                    "linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%)",
+                  color: "white",
+                  padding: "8px 16px",
+                  borderRadius: "20px",
+                  fontSize: "13px",
+                  fontWeight: "bold",
+                  cursor: "pointer",
+                  transition: "all 0.3s ease",
+                  flexShrink: 0,
+                  boxShadow: "0 4px 15px rgba(255, 107, 107, 0.3)",
+                  textAlign: "center",
+                  minWidth: "100px",
+                  position: "relative",
+                  overflow: "hidden",
+                }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.transform = "translateY(-2px)";
                   e.currentTarget.style.boxShadow =
