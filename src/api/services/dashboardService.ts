@@ -151,22 +151,50 @@ export const dashboardService = {
     return apiClient.get<DashboardStats>("/dashboard/stats");
   },
 
-  async getDashboardOverview(): Promise<ApiResponse<DashboardOverview>> {
-    return apiClient.get<DashboardOverview>("/dashboard/overview");
+  async getDashboardOverview(
+    period?: string
+  ): Promise<ApiResponse<DashboardOverview>> {
+    const queryParams = new URLSearchParams();
+    if (period) {
+      queryParams.append("period", period);
+    }
+    const queryString = queryParams.toString();
+    const endpoint = queryString
+      ? `/dashboard/overview?${queryString}`
+      : "/dashboard/overview";
+    return apiClient.get<DashboardOverview>(endpoint);
   },
 
-  async getChatTypeDistribution(): Promise<ApiResponse<ChatTypeDistribution>> {
-    return apiClient.get<ChatTypeDistribution>(
-      "/dashboard/chat-type/distribution"
-    );
+  async getChatTypeDistribution(
+    period?: string
+  ): Promise<ApiResponse<ChatTypeDistribution>> {
+    const queryParams = new URLSearchParams();
+    if (period) {
+      queryParams.append("period", period);
+    }
+    const queryString = queryParams.toString();
+    const endpoint = queryString
+      ? `/dashboard/chat-type/distribution?${queryString}`
+      : "/dashboard/chat-type/distribution";
+    return apiClient.get<ChatTypeDistribution>(endpoint);
   },
 
-  async getHourlyChatTypeDistribution(): Promise<
-    ApiResponse<HourlyChatTypeDistribution>
-  > {
-    return apiClient.get<HourlyChatTypeDistribution>(
-      "/dashboard/chat-type/distribution/hourly"
-    );
+  async getHourlyChatTypeDistribution(
+    start?: string,
+    end?: string
+  ): Promise<ApiResponse<HourlyChatTypeDistribution>> {
+    const queryParams = new URLSearchParams();
+    if (start) {
+      queryParams.append("start", start);
+    }
+    if (end) {
+      queryParams.append("end", end);
+    }
+    const queryString = queryParams.toString();
+    const endpoint = queryString
+      ? `/dashboard/chat-type/distribution/hourly?${queryString}`
+      : "/dashboard/chat-type/distribution/hourly";
+    return apiClient.get<HourlyChatTypeDistribution>(endpoint);
   },
 
   async getChatRanking(params?: {

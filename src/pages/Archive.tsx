@@ -1,5 +1,6 @@
 // src/pages/Archive.tsx
-import { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Container,
   Header,
@@ -12,51 +13,24 @@ import {
   BarChart,
   DatePicker,
   FormField,
+  Flashbar,
+  Link,
 } from "@cloudscape-design/components";
-
-const API_BASE_URL =
-  (import.meta as any)?.env?.VITE_API_BASE_URL || "https://api.f-yourchat.com";
-
-const ENDPOINTS = {
-  summary: (dateYYYYMMDD: string) =>
-    `${API_BASE_URL}/dashboard/summary?date=${dateYYYYMMDD}`,
-};
-
-// === Dashboard.tsx 과 동일한 타입 ===
-type SummaryResponse = {
-  success: boolean;
-  data: {
-    totals: {
-      todayCount: number;
-      yesterdayCount: number;
-      deltaPercent: number;
-    };
-    donations: {
-      todayCount: number;
-      yesterdayCount: number;
-      deltaPercent: number;
-    };
-    peaks: {
-      todayHour: number | null;
-      yesterdayHour: number | null;
-      yesterdayMinute?: number | null;
-    };
-    charts: {
-      chatKinds: Array<{ label: string; count: number; updatedAt?: string }>;
-      hourly: Array<{ hour: number; count: number }>; // 0..23
-      topChatters: Array<{ name: string; count: number }>;
-      streamerDonations: Array<{ name: string; amount: number }>;
-      topDonors: Array<{ name: string; amount: number }>;
-    };
-  };
-  message?: string;
-};
+import type { FlashbarProps } from "@cloudscape-design/components";
+import { useApi } from "../api/hooks";
+import { dashboardService, userService } from "../api/services";
+import type {
+  DashboardOverview,
+  ChatTypeDistribution,
+  HourlyChatTypeDistribution,
+  ChatRanking,
+  DonationStreamerRanking,
+  DonationDonorRanking,
+} from "../api/services/dashboardService";
 
 const fmtNumber = (n: number) => n.toLocaleString("ko-KR");
-const toHHmm = (h: number | null, m: number | null = 0) =>
-  h == null
-    ? "-"
-    : `${String(h).padStart(2, "0")}:${String(m ?? 0).padStart(2, "0")}`;
+
+// deltaPercent(양수/음수)에 따라 뱃지 색/기호를 그대로 표시
 const badgeFromDelta = (deltaPercent: number) => {
   const arrow = deltaPercent >= 0 ? "▲" : "▼";
   const color = deltaPercent > 0 ? "red" : deltaPercent < 0 ? "green" : "blue";
@@ -64,49 +38,47 @@ const badgeFromDelta = (deltaPercent: number) => {
   return { arrow, color: color as "red" | "green" | "blue", pct };
 };
 
-// === Dashboard.tsx 과 동일한 매핑 유틸 ===
-const mapPieDataFromSummary = (res: SummaryResponse) =>
-  (res.data.charts.chatKinds ?? []).map((r) => ({
-    title: r.label,
-    value: r.count,
-    lastUpdate: r.updatedAt
-      ? new Date(r.updatedAt).toLocaleString("ko-KR")
-      : "",
-  }));
-
-const mapHourlyLineFromSummary = (
-  dateYYYYMMDD: string,
-  res: SummaryResponse
-) => {
-  const base = new Date(`${dateYYYYMMDD}T00:00:00+09:00`);
-  const line = (res.data.charts.hourly ?? []).map(({ hour, count }) => {
-    const x = new Date(base);
-    x.setHours(hour, 0, 0, 0);
-    return { x, y: count };
-  });
-  const maxY = line.length ? Math.max(...line.map((d) => d.y)) : 0;
-  const peakPoint = line.length
-    ? line.reduce((a, b) => (a.y >= b.y ? a : b))
-    : null;
-  return { line, maxY, peakPoint };
-};
-
-const mapTopChattersFromSummary = (res: SummaryResponse) =>
-  (res.data.charts.topChatters ?? []).map((r) => ({
-    name: r.name,
-    count: r.count,
-  }));
-
-const mapStreamerDonationsFromSummary = (res: SummaryResponse) =>
-  (res.data.charts.streamerDonations ?? []).map((r) => ({
-    x: r.name,
-    y: r.amount,
-  }));
-
-const mapTopDonorsFromSummary = (res: SummaryResponse) =>
-  (res.data.charts.topDonors ?? []).map((r) => ({ x: r.name, y: r.amount }));
-
+// 컴포넌트 시작
 export default function Archive() {
+  const navigate = useNavigate();
+
+  const handleUserClick = async (userName: string) => {
+    try {
+      // 유저 검색 API 호출
+      const response = await userService.searchUsers({ nickname: userName });
+      const data = response.data;
+      const users = data.users || [];
+      const userIdHashes = data.userIdHashes || [];
+
+      if (userIdHashes.length === 0) {
+        // 유저를 찾을 수 없는 경우
+        navigate(`/not-found?nickname=${encodeURIComponent(userName)}`);
+      } else if (userIdHashes.length === 1) {
+        // 단일 유저인 경우 바로 상세 페이지로 이동
+        const hash = userIdHashes[0];
+        const name = users[0]?.name || userName;
+        navigate(
+          `/user/${encodeURIComponent(name)}?userIdHash=${encodeURIComponent(
+            hash
+          )}`
+        );
+      } else {
+        // 여러 유저인 경우 선택 페이지로 이동
+        navigate("/user-select", {
+          state: {
+            users,
+            userIdHashes,
+            searchTerm: userName,
+          },
+        });
+      }
+    } catch (error) {
+      console.error("User search failed:", error);
+      // 에러 발생 시 not-found 페이지로 이동
+      navigate(`/not-found?nickname=${encodeURIComponent(userName)}`);
+    }
+  };
+
   // KST 기준 포맷터
   const kstFmt = new Intl.DateTimeFormat("en-CA", {
     timeZone: "Asia/Seoul",
@@ -126,94 +98,211 @@ export default function Archive() {
   // ✅ 초기값: 어제
   const [selectedDate, setSelectedDate] = useState(yesterdayStr);
 
-  // 상단 카드 상태
-  const [loading, setLoading] = useState(true);
-  const [err, setErr] = useState<string | null>(null);
+  // Flash 메시지
+  const [items, setItems] = useState<FlashbarProps.MessageDefinition[]>([
+    {
+      id: "notice_1",
+      type: "info",
+      dismissible: true,
+      dismissLabel: "닫기",
+      onDismiss: () => setItems([]),
+      content: (
+        <>
+          과거의 채팅 분석 정보를 확인해보세요.{" "}
+          <Link color="inverted" href="/dashboard">
+            실시간 데이터 보기
+          </Link>
+        </>
+      ),
+    },
+  ]);
 
-  const [totalToday, setTotalToday] = useState(0);
-  const [totalDelta, setTotalDelta] = useState(0);
-  const [donToday, setDonToday] = useState(0);
-  const [donDelta, setDonDelta] = useState(0);
-  const [peakToday, setPeakToday] = useState<number | null>(null);
-  const [peakYesterdayH, setPeakYesterdayH] = useState<number | null>(null);
-  const [peakYesterdayM, setPeakYesterdayM] = useState<number | null>(0);
+  // API 호출 함수들을 useCallback으로 메모이제이션
+  const overviewApiCall = useCallback(
+    () => dashboardService.getDashboardOverview(selectedDate),
+    [selectedDate]
+  );
+
+  const chatTypeApiCall = useCallback(
+    () => dashboardService.getChatTypeDistribution(selectedDate),
+    [selectedDate]
+  );
+
+  const hourlyChatTypeApiCall = useCallback(
+    () =>
+      dashboardService.getHourlyChatTypeDistribution(
+        selectedDate,
+        selectedDate
+      ),
+    [selectedDate]
+  );
+
+  const chatRankingApiCall = useCallback(
+    () => dashboardService.getChatRanking({ period: selectedDate }),
+    [selectedDate]
+  );
+
+  const donationStreamerRankingApiCall = useCallback(
+    () => dashboardService.getDonationStreamerRanking({ period: selectedDate }),
+    [selectedDate]
+  );
+
+  const donationDonorRankingApiCall = useCallback(
+    () => dashboardService.getDonationDonorRanking({ period: selectedDate }),
+    [selectedDate]
+  );
+
+  // 상단 3카드 상태 - 새로운 API 사용
+  const {
+    data: overviewData,
+    loading,
+    error,
+  } = useApi<DashboardOverview>(overviewApiCall, [overviewApiCall]);
+
+  // 채팅 유형 분포 API 호출
+  const {
+    data: chatTypeData,
+    loading: chatTypeLoading,
+    error: chatTypeError,
+  } = useApi<ChatTypeDistribution>(chatTypeApiCall, [chatTypeApiCall]);
+
+  // 시간대별 채팅 수 API 호출
+  const {
+    data: hourlyData,
+    loading: hourlyLoading,
+    error: hourlyError,
+  } = useApi<HourlyChatTypeDistribution>(hourlyChatTypeApiCall, [
+    hourlyChatTypeApiCall,
+  ]);
+
+  // 실시간 채팅 랭킹 API 호출
+  const {
+    data: chatRankingData,
+    loading: chatRankingLoading,
+    error: chatRankingError,
+  } = useApi<ChatRanking>(chatRankingApiCall, [chatRankingApiCall]);
+
+  // 후원 스트리머 랭킹 API 호출
+  const {
+    data: donationStreamerData,
+    loading: donationStreamerLoading,
+    error: donationStreamerError,
+  } = useApi<DonationStreamerRanking>(donationStreamerRankingApiCall, [
+    donationStreamerRankingApiCall,
+  ]);
+
+  // 치즈 도네이션 랭킹 API 호출
+  const {
+    data: donationDonorData,
+    loading: donationDonorLoading,
+    error: donationDonorError,
+  } = useApi<DonationDonorRanking>(donationDonorRankingApiCall, [
+    donationDonorRankingApiCall,
+  ]);
+
+  // 실제 API 응답 구조에 맞게 데이터 추출
+  const totalToday = overviewData?.data?.todayChatCount ?? 0;
+  const totalDelta = overviewData?.data?.todayChatCountChange ?? 0;
+  const donToday = overviewData?.data?.todayCheeseCount ?? 0;
+  const donDelta = overviewData?.data?.todayCheeseCountChange ?? 0;
+
+  // 시간 문자열을 파싱 (예: "12:00" -> 12, 0)
+  const parseTimeString = (timeStr: string | undefined) => {
+    if (!timeStr) return { hour: null, minute: 0 };
+    const [hour, minute] = timeStr.split(":").map(Number);
+    return { hour, minute };
+  };
+
+  const todayPeak = parseTimeString(overviewData?.data?.todayPeakTime);
+  const yesterdayPeak = parseTimeString(overviewData?.data?.yesterdayPeakTime);
+
+  const toHHmm = (h: number | null, m: number | null = 0) => {
+    if (h == null) return "-";
+    return `${String(h).padStart(2, "0")}:${String(m ?? 0).padStart(2, "0")}`;
+  };
 
   // 그래프 상태
-  const [chatKindData, setChatKindData] = useState<
-    Array<{ title: string; value: number; lastUpdate?: string }>
-  >([]);
-  const [chatCountData, setChatCountData] = useState<
-    Array<{ x: Date; y: number }>
-  >([]);
-  const [maxY, setMaxY] = useState(0);
-  const [peakPoint, setPeakPoint] = useState<{ x: Date; y: number } | null>(
-    null
-  );
-  const [userChatCountData, setUserChatCountData] = useState<
-    Array<{ name: string; count: number }>
-  >([]);
+  // Pie - 채팅 유형 분포 API 데이터
+  const chatKindData = chatTypeData?.data
+    ? [
+        {
+          title: "채팅",
+          value: chatTypeData.data.distribution?.chat.count ?? 0,
+          lastUpdate: new Date().toLocaleString("ko-KR"),
+        },
+        {
+          title: "후원",
+          value: chatTypeData.data.distribution?.donation.count ?? 0,
+          lastUpdate: new Date().toLocaleString("ko-KR"),
+        },
+        {
+          title: "블라인드",
+          value: chatTypeData.data.distribution?.blind.count ?? 0,
+          lastUpdate: new Date().toLocaleString("ko-KR"),
+        },
+      ]
+    : [
+        {
+          title: "채팅",
+          value: 0,
+          lastUpdate: new Date().toLocaleString("ko-KR"),
+        },
+        {
+          title: "후원",
+          value: 0,
+          lastUpdate: new Date().toLocaleString("ko-KR"),
+        },
+        {
+          title: "블라인드",
+          value: 0,
+          lastUpdate: new Date().toLocaleString("ko-KR"),
+        },
+      ];
 
-  // 치즈 랭킹
-  const [streamerDonationData, setStreamerDonationData] = useState<
-    Array<{ x: string; y: number }>
-  >([]);
-  const [userDonationData, setUserDonationData] = useState<
-    Array<{ x: string; y: number }>
-  >([]);
+  // Line - 시간대별 채팅 수 API 데이터
+  const hourlyLineData = hourlyData?.data?.hourlyData
+    ? hourlyData.data.hourlyData.map((item) => ({
+        x: new Date(
+          `${selectedDate}T${String(item.hour).padStart(2, "0")}:00:00+09:00`
+        ),
+        y: item.chatTypes.chat + item.chatTypes.donation + item.chatTypes.blind,
+      }))
+    : [];
 
-  // 데이터 로드 (selectedDate 변경 때마다)
-  useEffect(() => {
-    const ac = new AbortController();
-    (async () => {
-      if (!selectedDate) return;
-      setLoading(true);
-      setErr(null);
-      try {
-        const res = await fetch(ENDPOINTS.summary(selectedDate), {
-          signal: ac.signal,
-        });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const json: SummaryResponse = await res.json();
-        console.log("[SummaryResponse]", json);
+  const maxY = hourlyLineData.length
+    ? Math.max(...hourlyLineData.map((d) => d.y))
+    : 0;
+  const peakPoint = hourlyLineData.length
+    ? hourlyLineData.reduce((a, b) => (a.y >= b.y ? a : b))
+    : null;
 
-        if (!json?.success)
-          throw new Error(json?.message || "요약 데이터 수신 실패");
+  const thresholdSeries = peakPoint
+    ? [{ title: "피크 시간대", type: "threshold" as const, x: peakPoint.x }]
+    : [];
 
-        // 상단 카드
-        const { totals, donations, peaks } = json.data;
-        setTotalToday(totals.todayCount ?? 0);
-        setTotalDelta(totals.deltaPercent ?? 0);
-        setDonToday(donations.todayCount ?? 0);
-        setDonDelta(donations.deltaPercent ?? 0);
-        setPeakToday(peaks.todayHour ?? null);
-        setPeakYesterdayH(peaks.yesterdayHour ?? null);
-        setPeakYesterdayM(peaks.yesterdayMinute ?? 0);
+  // Top 10 - 실시간 채팅 랭킹 API 데이터
+  const userChatCountData = chatRankingData?.data?.ranking
+    ? chatRankingData.data.ranking.map((item) => ({
+        name: item.username,
+        count: item.chatCount,
+      }))
+    : [];
 
-        // 그래프 섹션
-        setChatKindData(mapPieDataFromSummary(json));
-        const { line, maxY, peakPoint } = mapHourlyLineFromSummary(
-          selectedDate,
-          json
-        );
-        setChatCountData(line);
-        setMaxY(maxY);
-        setPeakPoint(peakPoint);
-        setUserChatCountData(mapTopChattersFromSummary(json));
+  // 치즈 랭킹 - 후원 스트리머 랭킹 API 데이터
+  const streamerDonationData = donationStreamerData?.data?.ranking
+    ? donationStreamerData.data.ranking.map((item) => ({
+        x: item.streamerName,
+        y: item.receivedCheese,
+      }))
+    : [];
 
-        // 치즈 랭킹
-        setStreamerDonationData(mapStreamerDonationsFromSummary(json));
-        setUserDonationData(mapTopDonorsFromSummary(json));
-      } catch (e: any) {
-        if (e?.name !== "AbortError") setErr(e?.message ?? "데이터 로드 실패");
-      } finally {
-        setLoading(false);
-      }
-    })();
-    return () => ac.abort();
-  }, [selectedDate]);
-
-  const totalBadge = badgeFromDelta(totalDelta);
-  const donBadge = badgeFromDelta(donDelta);
+  // 치즈 랭킹 - 도네이션 랭킹 API 데이터
+  const userDonationData = donationDonorData?.data?.ranking
+    ? donationDonorData.data.ranking.map((item) => ({
+        x: item.username,
+        y: item.donatedCheese,
+      }))
+    : [];
 
   const maxStreamerY = streamerDonationData.length
     ? Math.max(...streamerDonationData.map((d) => d.y))
@@ -221,15 +310,27 @@ export default function Archive() {
   const maxUserY = userDonationData.length
     ? Math.max(...userDonationData.map((d) => d.y))
     : 0;
-  const roundUp = (v: number, step: number) =>
-    Math.max(step, Math.ceil(v / step) * step);
 
-  const thresholdSeries = peakPoint
-    ? [{ title: "피크 시간대", type: "threshold" as const, x: peakPoint.x }]
-    : [];
+  const calculateYDomain = (maxValue: number) => {
+    const step =
+      maxValue >= 1000000
+        ? 1000000
+        : maxValue >= 100000
+        ? 100000
+        : maxValue >= 10000
+        ? 10000
+        : 1000;
+    const max = Math.max(step, Math.ceil(maxValue / step) * step);
+    return [0, max];
+  };
+
+  const totalBadge = badgeFromDelta(totalDelta);
+  const donBadge = badgeFromDelta(donDelta);
 
   return (
     <SpaceBetween size="l">
+      <Flashbar items={items} />
+
       {/* 헤더 + 날짜 선택 */}
       <Grid gridDefinition={[{ colspan: 9 }, { colspan: 3 }]}>
         <Header variant="h1">
@@ -252,19 +353,35 @@ export default function Archive() {
         </Box>
       </Grid>
 
-      {/* 상단 요약 */}
-      <Grid gridDefinition={[{ colspan: 4 }, { colspan: 4 }, { colspan: 4 }]}>
+      {/* 상단 요약 - 2개 박스 (피크시간 제외) */}
+      <Grid gridDefinition={[{ colspan: 6 }, { colspan: 6 }]}>
         <Container
           fitHeight
-          header={<Header variant="h2">💤 누적 채팅수</Header>}
+          header={<Header variant="h2">💬 누적 채팅수</Header>}
         >
           <SpaceBetween size="s">
-            <Box fontSize="display-l" fontWeight="bold">
-              {fmtNumber(totalToday)}
-            </Box>
-            <Badge color={totalBadge.color}>
-              {totalBadge.arrow} {totalBadge.pct}%
-            </Badge>
+            {loading ? (
+              <Box textAlign="center" padding="xl">
+                <Box fontSize="heading-m" color="text-status-info">
+                  데이터를 불러오는 중...
+                </Box>
+              </Box>
+            ) : error ? (
+              <Box textAlign="center" padding="xl">
+                <Box fontSize="heading-m" color="text-status-error">
+                  데이터 로드 중 오류가 발생했습니다.
+                </Box>
+              </Box>
+            ) : (
+              <>
+                <Box fontSize="display-l" fontWeight="bold">
+                  {fmtNumber(totalToday)}
+                </Box>
+                <Badge color={totalBadge.color}>
+                  {totalBadge.arrow} {totalBadge.pct}%
+                </Badge>
+              </>
+            )}
           </SpaceBetween>
         </Container>
 
@@ -273,23 +390,28 @@ export default function Archive() {
           header={<Header variant="h2">🧀 누적 치즈</Header>}
         >
           <SpaceBetween size="s">
-            <Box fontSize="display-l" fontWeight="bold">
-              {fmtNumber(donToday)}
-            </Box>
-            <Badge color={donBadge.color}>
-              {donBadge.arrow} {donBadge.pct}%
-            </Badge>
-          </SpaceBetween>
-        </Container>
-
-        <Container fitHeight header={<Header variant="h2">🕓 피크시간</Header>}>
-          <SpaceBetween size="s">
-            <Box fontSize="display-l" fontWeight="bold">
-              {toHHmm(peakToday)}
-            </Box>
-            <Badge color="blue">
-              전일 {toHHmm(peakYesterdayH, peakYesterdayM ?? 0)}
-            </Badge>
+            {loading ? (
+              <Box textAlign="center" padding="xl">
+                <Box fontSize="heading-m" color="text-status-info">
+                  데이터를 불러오는 중...
+                </Box>
+              </Box>
+            ) : error ? (
+              <Box textAlign="center" padding="xl">
+                <Box fontSize="heading-m" color="text-status-error">
+                  데이터 로드 중 오류가 발생했습니다.
+                </Box>
+              </Box>
+            ) : (
+              <>
+                <Box fontSize="display-l" fontWeight="bold">
+                  {fmtNumber(donToday)}
+                </Box>
+                <Badge color={donBadge.color}>
+                  {donBadge.arrow} {donBadge.pct}%
+                </Badge>
+              </>
+            )}
           </SpaceBetween>
         </Container>
       </Grid>
@@ -300,87 +422,235 @@ export default function Archive() {
           fitHeight
           header={<Header variant="h2">📊 채팅 유형 분포</Header>}
         >
-          <PieChart
-            data={chatKindData}
-            ariaLabel="Pie chart"
-            ariaDescription="Chat categories"
-            detailPopoverContent={(datum, sum) => [
-              { key: "Count", value: datum.value },
-              {
-                key: "Percentage",
-                value: `${((datum.value / sum) * 100).toFixed(0)}%`,
-              },
-              { key: "Last update", value: datum.lastUpdate || "-" },
-            ]}
-            segmentDescription={(datum, sum) =>
-              `${datum.value}개, ${((datum.value / sum) * 100).toFixed(0)}%`
-            }
-            hideFilter
-          />
+          {chatTypeLoading ? (
+            <Box textAlign="center" padding="xl">
+              <Box fontSize="heading-m" color="text-status-info">
+                차트 데이터를 불러오는 중...
+              </Box>
+            </Box>
+          ) : chatTypeError ? (
+            <Box textAlign="center" padding="xl">
+              <Box fontSize="heading-m" color="text-status-error">
+                차트 데이터 로드 중 오류가 발생했습니다.
+              </Box>
+            </Box>
+          ) : (
+            <PieChart
+              data={chatKindData}
+              ariaLabel="Pie chart"
+              ariaDescription="Chat categories"
+              detailPopoverContent={(datum, sum) => [
+                { key: "Count", value: datum.value },
+                {
+                  key: "Percentage",
+                  value: `${((datum.value / sum) * 100).toFixed(0)}%`,
+                },
+                { key: "Last update", value: datum.lastUpdate || "-" },
+              ]}
+              segmentDescription={(datum, sum) =>
+                `${datum.value}개, ${((datum.value / sum) * 100).toFixed(0)}%`
+              }
+              hideFilter
+            />
+          )}
         </Container>
 
         <Container
           fitHeight
           header={<Header variant="h2">📈 시간대별 채팅 수</Header>}
         >
-          <LineChart
-            series={[
-              { title: "Chat count", type: "line", data: chatCountData },
-              ...thresholdSeries,
-            ]}
-            xDomain={
-              chatCountData.length
-                ? [
-                    chatCountData[0].x,
-                    chatCountData[chatCountData.length - 1].x,
-                  ]
-                : [
-                    new Date(`${selectedDate}T00:00:00+09:00`),
-                    new Date(`${selectedDate}T23:59:59+09:00`),
-                  ]
-            }
-            yDomain={[0, Math.max(100, Math.ceil((maxY || 0) / 100) * 100)]}
-            height={300}
-            xScaleType="time"
-            xTitle="시간 (한국 기준)"
-            yTitle="채팅 수"
-            hideFilter
-            ariaLabel="채팅 수 라인 차트"
-            detailPopoverSeriesContent={({ series, x, y }) => ({
-              key: `🌟 ${series.title}`,
-              value: `${y}개 (${x.toLocaleTimeString("ko-KR", {
-                hour: "2-digit",
-                minute: "2-digit",
-              })})`,
-            })}
-          />
+          {hourlyLoading ? (
+            <Box textAlign="center" padding="xl">
+              <Box fontSize="heading-m" color="text-status-info">
+                차트 데이터를 불러오는 중...
+              </Box>
+            </Box>
+          ) : hourlyError ? (
+            <Box textAlign="center" padding="xl">
+              <Box fontSize="heading-m" color="text-status-error">
+                차트 데이터 로드 중 오류가 발생했습니다.
+              </Box>
+            </Box>
+          ) : (
+            <LineChart
+              series={[
+                { title: "Chat count", type: "line", data: hourlyLineData },
+                ...thresholdSeries,
+              ]}
+              xDomain={
+                hourlyLineData.length
+                  ? [
+                      hourlyLineData[0].x,
+                      hourlyLineData[hourlyLineData.length - 1].x,
+                    ]
+                  : [
+                      new Date(`${selectedDate}T00:00:00+09:00`),
+                      new Date(`${selectedDate}T23:59:59+09:00`),
+                    ]
+              }
+              yDomain={[0, Math.max(100, Math.ceil((maxY || 0) / 100) * 100)]}
+              height={300}
+              xScaleType="time"
+              xTitle="시간 (한국 기준)"
+              yTitle="채팅 수"
+              hideFilter
+              ariaLabel="채팅 수 라인 차트"
+              detailPopoverSeriesContent={({ series, x, y }) => ({
+                key: `🌟 ${series.title}`,
+                value: `${y}개 (${x.toLocaleTimeString("ko-KR", {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })})`,
+              })}
+            />
+          )}
         </Container>
 
         {/* 실시간 채팅 랭킹 (Top 10) */}
         <Container
           fitHeight
-          header={<Header variant="h2">💬 채팅 랭킹 (Top 10)</Header>}
+          header={<Header variant="h2">💬 실시간 채팅 랭킹 (Top 10)</Header>}
         >
-          <SpaceBetween size="s">
-            {[...userChatCountData]
-              .sort((a, b) => b.count - a.count)
-              .slice(0, 10)
-              .map((user, index) => {
-                const rankIcon = ["🥇", "🥈", "🥉"][index] || `${index + 1}위`;
-                return (
-                  <Box key={user.name} display="inline-block">
-                    <SpaceBetween direction="horizontal" size="m">
-                      <Box fontWeight="bold">
-                        {rankIcon} {user.name}
-                      </Box>
-                      <Box color="text-status-info" fontWeight="bold">
-                        {user.count.toLocaleString()}개
-                      </Box>
-                    </SpaceBetween>
-                  </Box>
-                );
-              })}
-          </SpaceBetween>
+          {chatRankingLoading ? (
+            <Box textAlign="center" padding="xl">
+              <Box fontSize="heading-m" color="text-status-info">
+                랭킹 데이터를 불러오는 중...
+              </Box>
+            </Box>
+          ) : chatRankingError ? (
+            <Box textAlign="center" padding="xl">
+              <Box fontSize="heading-m" color="text-status-error">
+                랭킹 데이터 로드 중 오류가 발생했습니다.
+              </Box>
+            </Box>
+          ) : (
+            <SpaceBetween size="xxs">
+              {[...userChatCountData]
+                .sort((a, b) => b.count - a.count)
+                .slice(0, 10)
+                .map((user, index) => {
+                  const rank = index + 1;
+                  const rankIcon = rank <= 3 ? ["🥇", "🥈", "🥉"][index] : null;
+                  const rankColor =
+                    rank <= 3 ? "#FFD700" : rank <= 10 ? "#C0C0C0" : "#CD7F32";
+
+                  return (
+                    <div
+                      key={user.name}
+                      style={{
+                        width: "100%",
+                        padding: "8px 12px",
+                        border: "1px solid #e9ecef",
+                        borderRadius: "8px",
+                        background:
+                          rank <= 3
+                            ? "linear-gradient(135deg, #fff9e6, #fff5d6)"
+                            : "#ffffff",
+                        transition: "all 0.2s ease",
+                        marginBottom: "4px",
+                        boxSizing: "border-box",
+                        cursor: "pointer",
+                      }}
+                      onClick={() => handleUserClick(user.name)}
+                      onMouseEnter={(e: React.MouseEvent<HTMLDivElement>) => {
+                        e.currentTarget.style.transform = "translateY(-2px)";
+                        e.currentTarget.style.boxShadow =
+                          "0 4px 12px rgba(0,0,0,0.1)";
+                      }}
+                      onMouseLeave={(e: React.MouseEvent<HTMLDivElement>) => {
+                        e.currentTarget.style.transform = "translateY(0)";
+                        e.currentTarget.style.boxShadow = "none";
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "8px",
+                          width: "100%",
+                        }}
+                      >
+                        {/* 순위 */}
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            minWidth: "50px",
+                            flexShrink: 0,
+                          }}
+                        >
+                          {rankIcon ? (
+                            <span
+                              style={{ fontSize: "24px", marginRight: "8px" }}
+                            >
+                              {rankIcon}
+                            </span>
+                          ) : (
+                            <div
+                              style={{
+                                width: "24px",
+                                height: "24px",
+                                borderRadius: "50%",
+                                background:
+                                  rankColor === "#FFD700"
+                                    ? "#fff3cd"
+                                    : "#f8f9fa",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                border: `2px solid ${rankColor}`,
+                                fontSize: "12px",
+                                fontWeight: "bold",
+                                color: rankColor,
+                              }}
+                            >
+                              {rank}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* 사용자 정보 */}
+                        <div
+                          style={{ flex: 1, minWidth: 0, overflow: "hidden" }}
+                        >
+                          <div
+                            style={{
+                              fontWeight: "bold",
+                              fontSize: "16px",
+                              color: "#495057",
+                              whiteSpace: "nowrap",
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                            }}
+                          >
+                            {user.name}
+                          </div>
+                        </div>
+
+                        {/* 채팅 수 */}
+                        <div
+                          style={{
+                            textAlign: "right",
+                            minWidth: "70px",
+                            flexShrink: 0,
+                          }}
+                        >
+                          <div
+                            style={{
+                              fontSize: "16px",
+                              fontWeight: "bold",
+                              color: "#007bff",
+                            }}
+                          >
+                            {user.count.toLocaleString()}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+            </SpaceBetween>
+          )}
         </Container>
       </Grid>
 
@@ -389,29 +659,59 @@ export default function Archive() {
         <Container
           header={<Header variant="h2">🤑 치즈 후원 스트리머 랭킹</Header>}
         >
-          <BarChart
-            series={[
-              { title: "받은 🧀", type: "bar", data: streamerDonationData },
-            ]}
-            xDomain={streamerDonationData.map((d) => d.x)}
-            yDomain={[0, 100000000]}
-            height={300}
-            horizontalBars
-            hideFilter
-            ariaLabel="Streamer donation ranking chart"
-          />
+          {donationStreamerLoading ? (
+            <Box textAlign="center" padding="xl">
+              <Box fontSize="heading-m" color="text-status-info">
+                스트리머 랭킹 데이터를 불러오는 중...
+              </Box>
+            </Box>
+          ) : donationStreamerError ? (
+            <Box textAlign="center" padding="xl">
+              <Box fontSize="heading-m" color="text-status-error">
+                스트리머 랭킹 데이터 로드 중 오류가 발생했습니다.
+              </Box>
+            </Box>
+          ) : (
+            <BarChart
+              series={[
+                { title: "받은 🧀", type: "bar", data: streamerDonationData },
+              ]}
+              xDomain={streamerDonationData.map((d) => d.x)}
+              yDomain={calculateYDomain(maxStreamerY)}
+              height={300}
+              horizontalBars
+              hideFilter
+              ariaLabel="Streamer donation ranking chart"
+            />
+          )}
         </Container>
 
         <Container header={<Header variant="h2">💸 치즈 도네이션 랭킹</Header>}>
-          <BarChart
-            series={[{ title: "보낸 🧀", type: "bar", data: userDonationData }]}
-            xDomain={userDonationData.map((d) => d.x)}
-            yDomain={[0, 10000000]}
-            height={300}
-            horizontalBars
-            hideFilter
-            ariaLabel="User donation ranking chart"
-          />
+          {donationDonorLoading ? (
+            <Box textAlign="center" padding="xl">
+              <Box fontSize="heading-m" color="text-status-info">
+                도네이션 랭킹 데이터를 불러오는 중...
+              </Box>
+            </Box>
+          ) : donationDonorError ? (
+            <Box textAlign="center" padding="xl">
+              <Box fontSize="heading-m" color="text-status-error">
+                도네이션 랭킹 데이터 로드 중 오류가 발생했습니다.
+              </Box>
+            </Box>
+          ) : (
+            <BarChart
+              series={[
+                { title: "보낸 🧀", type: "bar", data: userDonationData },
+              ]}
+              xDomain={userDonationData.map((d) => d.x)}
+              yDomain={calculateYDomain(maxUserY)}
+              height={300}
+              horizontalBars
+              hideFilter
+              ariaLabel="User donation ranking chart"
+            />
+          )}
         </Container>
       </Grid>
     </SpaceBetween>
