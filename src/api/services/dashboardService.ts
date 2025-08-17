@@ -166,11 +166,15 @@ export const dashboardService = {
   },
 
   async getChatTypeDistribution(
-    period?: string
+    start?: string,
+    end?: string
   ): Promise<ApiResponse<ChatTypeDistribution>> {
     const queryParams = new URLSearchParams();
-    if (period) {
-      queryParams.append("period", period);
+    if (start) {
+      queryParams.append("start", start);
+    }
+    if (end) {
+      queryParams.append("end", end);
     }
     const queryString = queryParams.toString();
     const endpoint = queryString

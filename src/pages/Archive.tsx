@@ -124,7 +124,7 @@ export default function Archive() {
   );
 
   const chatTypeApiCall = useCallback(
-    () => dashboardService.getChatTypeDistribution(selectedDate),
+    () => dashboardService.getChatTypeDistribution(selectedDate, selectedDate),
     [selectedDate]
   );
 
