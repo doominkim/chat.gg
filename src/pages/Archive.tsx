@@ -229,19 +229,16 @@ export default function Archive() {
           title: "채팅",
           value: chatTypeData.data.distribution?.chat.count ?? 0,
           lastUpdate: new Date().toLocaleString("ko-KR"),
-          color: "#0073bb",
-        },
-        {
-          title: "블라인드",
-          value: chatTypeData.data.distribution?.blind.count ?? 0,
-          lastUpdate: new Date().toLocaleString("ko-KR"),
-          color: "#ff9900",
         },
         {
           title: "후원",
           value: chatTypeData.data.distribution?.donation.count ?? 0,
           lastUpdate: new Date().toLocaleString("ko-KR"),
-          color: "#d13212",
+        },
+        {
+          title: "블라인드",
+          value: chatTypeData.data.distribution?.blind.count ?? 0,
+          lastUpdate: new Date().toLocaleString("ko-KR"),
         },
       ]
     : [
@@ -249,19 +246,16 @@ export default function Archive() {
           title: "채팅",
           value: 0,
           lastUpdate: new Date().toLocaleString("ko-KR"),
-          color: "#0073bb",
-        },
-        {
-          title: "블라인드",
-          value: 0,
-          lastUpdate: new Date().toLocaleString("ko-KR"),
-          color: "#ff9900",
         },
         {
           title: "후원",
           value: 0,
           lastUpdate: new Date().toLocaleString("ko-KR"),
-          color: "#d13212",
+        },
+        {
+          title: "블라인드",
+          value: 0,
+          lastUpdate: new Date().toLocaleString("ko-KR"),
         },
       ];
 
