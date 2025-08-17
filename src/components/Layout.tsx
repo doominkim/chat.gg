@@ -9,6 +9,7 @@ import {
 } from "@cloudscape-design/components";
 import { userService } from "../api/services";
 import type { UserSearchResult } from "../api/services/userService";
+import AdBanner from "./AdBanner";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -144,6 +145,11 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       />
 
       <AppLayout content={children} navigationHide={true} toolsHide={true} />
+
+      {/* 광고 배너 - 항상 최하단에 고정 */}
+      <AdBanner
+        showPlaceholder={true} // 플레이스홀더 표시 (실제 AdSense 정보가 없을 때)
+      />
     </>
   );
 };

@@ -647,10 +647,7 @@ export default function Dashboard() {
             )}
           </SpaceBetween>
         </Container>
-        <Container
-          fitHeight
-          header={<Header variant="h2">📺 수집중인 채널</Header>}
-        >
+        <Container header={<Header variant="h2">📺 LIVE 채널</Header>}>
           <SpaceBetween size="s">
             {loading ? (
               <Box textAlign="center" padding="xl">
