@@ -33,7 +33,7 @@ const fmtNumber = (n: number) => n.toLocaleString("ko-KR");
 // deltaPercent(양수/음수)에 따라 뱃지 색/기호를 그대로 표시
 const badgeFromDelta = (deltaPercent: number) => {
   const arrow = deltaPercent >= 0 ? "▲" : "▼";
-  const color = deltaPercent > 0 ? "blue" : deltaPercent < 0 ? "red" : "green";
+  const color = deltaPercent > 0 ? "red" : deltaPercent < 0 ? "blue" : "green";
   const pct = Math.abs(deltaPercent).toFixed(1).replace(/\.0$/, "");
   return { arrow, color: color as "red" | "green" | "blue", pct };
 };
