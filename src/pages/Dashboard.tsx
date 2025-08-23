@@ -245,11 +245,6 @@ export default function Dashboard() {
     [channelId]
   );
 
-  const donationStreamerRankingApiCall = useCallback(
-    () => dashboardService.getDonationStreamerRanking(Number(channelId)),
-    [channelId]
-  );
-
   const donationDonorRankingApiCall = useCallback(
     () => dashboardService.getDonationDonorRanking(Number(channelId)),
     [channelId]
@@ -282,13 +277,6 @@ export default function Dashboard() {
     loading: chatRankingLoading,
     error: chatRankingError,
   } = useApi<ChatRanking>(chatRankingApiCall, []);
-
-  // 후원 스트리머 랭킹 API 호출
-  const {
-    data: donationStreamerData,
-    loading: donationStreamerLoading,
-    error: donationStreamerError,
-  } = useApi<DonationStreamerRanking>(donationStreamerRankingApiCall, []);
 
   // 치즈 도네이션 랭킹 API 호출
   const {
@@ -410,31 +398,18 @@ export default function Dashboard() {
         { name: "무야호", count: 100 },
       ];
 
-  // 치즈 랭킹 API 데이터
-  const streamerDonationData = donationStreamerData?.ranking
-    ? donationStreamerData.ranking.map((streamer) => ({
-        x: streamer.streamerName,
-        y: streamer.receivedCheese,
-      }))
-    : [
-        { x: "쏘쿨BJ", y: 8500 },
-        { x: "도라BJ", y: 6200 },
-        { x: "고양이BJ", y: 5800 },
-        { x: "치지직왕", y: 4100 },
-        { x: "노래하는형", y: 3500 },
-      ];
-
   const userDonationData = donationDonorData?.ranking
     ? donationDonorData.ranking.map((donor) => ({
         x: donor.username,
         y: donor.donatedCheese,
+        count: donor.donationCount,
       }))
     : [
-        { x: "기부왕123", y: 10000 },
-        { x: "후원봇", y: 8300 },
-        { x: "팬클럽1호", y: 7000 },
-        { x: "닉네임김치", y: 6400 },
-        { x: "익명기부", y: 5000 },
+        { x: "기부왕123", y: 10000, count: 15 },
+        { x: "후원봇", y: 8300, count: 12 },
+        { x: "팬클럽1호", y: 7000, count: 8 },
+        { x: "닉네임김치", y: 6400, count: 10 },
+        { x: "익명기부", y: 5000, count: 6 },
       ];
 
   const todayAtKST = (h: number, m: number, s: number = 0) =>
@@ -453,9 +428,6 @@ export default function Dashboard() {
   const donBadge = badgeFromDelta(donDelta);
 
   // BarChart yDomain 계산 (금액 최대치 기반, 적절한 단위로 올림)
-  const maxStreamerY = streamerDonationData.length
-    ? Math.max(...streamerDonationData.map((d) => d.y))
-    : 0;
   const maxUserY = userDonationData.length
     ? Math.max(...userDonationData.map((d) => d.y))
     : 0;
@@ -702,27 +674,26 @@ export default function Dashboard() {
               yTitle="채팅 수"
               hideFilter
               ariaLabel="채팅 수 라인 차트"
-              xTickFormatter={(date) => `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`}
+              xTickFormatter={(date) =>
+                `${date.getHours().toString().padStart(2, "0")}:${date
+                  .getMinutes()
+                  .toString()
+                  .padStart(2, "0")}`
+              }
               detailPopoverSeriesContent={({ series, x, y }) => ({
                 key: `🌟 ${series.title}`,
-                value: `${y}개 (${x.getHours().toString().padStart(2, '0')}:${x.getMinutes().toString().padStart(2, '0')})`,
+                value: `${y}개 (${x.getHours().toString().padStart(2, "0")}:${x
+                  .getMinutes()
+                  .toString()
+                  .padStart(2, "0")})`,
               })}
             />
           )}
         </Container>
+      </Grid>
 
-        {/* // 사용자 채팅 랭킹 - 바 차트
-        <Container header={<Header variant="h2">📊 사용자 채팅 랭킹</Header>}>
-          <BarChart
-            series={[{ title: "채팅 수", type: "bar", data: userChatCountData }]}
-            xDomain={users}
-            yDomain={[0, 10000]}
-            height={300}
-            horizontalBars
-            hideFilter
-            ariaLabel="User chat ranking chart"
-          />
-        </Container> */}
+      {/* 랭킹 섹션 */}
+      <Grid gridDefinition={[{ colspan: 6 }, { colspan: 6 }]}>
         {/* 사용자 채팅 랭킹 - 텍스트 */}
         <Container
           fitHeight
@@ -869,43 +840,10 @@ export default function Dashboard() {
             </SpaceBetween>
           )}
         </Container>
-      </Grid>
-
-      <Grid gridDefinition={[{ colspan: 6 }, { colspan: 6 }]}>
-        <Container
-          // fitHeight
-          header={<Header variant="h2">🤑 치즈 후원 스트리머 랭킹</Header>}
-        >
-          {donationStreamerLoading ? (
-            <Box textAlign="center" padding="xl">
-              <Box fontSize="heading-m" color="text-status-info">
-                스트리머 랭킹 데이터를 불러오는 중...
-              </Box>
-            </Box>
-          ) : donationStreamerError ? (
-            <Box textAlign="center" padding="xl">
-              <Box fontSize="heading-m" color="text-status-error">
-                스트리머 랭킹 데이터 로드 중 오류가 발생했습니다.
-              </Box>
-            </Box>
-          ) : (
-            <BarChart
-              series={[
-                { title: "받은 🧀", type: "bar", data: streamerDonationData },
-              ]}
-              xDomain={streamerDonationData.map((d) => d.x)}
-              yDomain={calculateYDomain(maxStreamerY)}
-              height={300}
-              horizontalBars
-              hideFilter
-              ariaLabel="Streamer donation ranking chart"
-            />
-          )}
-        </Container>
 
         <Container
-          // fitHeight
-          header={<Header variant="h2">💸 치즈 도네이션 랭킹</Header>}
+          fitHeight
+          header={<Header variant="h2">💸 치즈 도네이션 랭킹 (Top 10)</Header>}
         >
           {donationDonorLoading ? (
             <Box textAlign="center" padding="xl">
@@ -920,17 +858,132 @@ export default function Dashboard() {
               </Box>
             </Box>
           ) : (
-            <BarChart
-              series={[
-                { title: "보낸 🧀", type: "bar", data: userDonationData },
-              ]}
-              xDomain={userDonationData.map((d) => d.x)}
-              yDomain={calculateYDomain(maxUserY)}
-              height={300}
-              horizontalBars
-              hideFilter
-              ariaLabel="User donation ranking chart"
-            />
+            <SpaceBetween size="xxs">
+              {[...userDonationData]
+                .sort((a, b) => b.y - a.y)
+                .slice(0, 10)
+                .map((donor, index) => {
+                  const rank = index + 1;
+                  const rankIcon = rank <= 3 ? ["🥇", "🥈", "🥉"][index] : null;
+                  const rankColor =
+                    rank <= 3 ? "#FFD700" : rank <= 10 ? "#C0C0C0" : "#CD7F32";
+
+                  return (
+                    <div
+                      key={donor.x}
+                      style={{
+                        width: "100%",
+                        padding: "8px 12px",
+                        border: "1px solid #e9ecef",
+                        borderRadius: "8px",
+                        background:
+                          rank <= 3
+                            ? "linear-gradient(135deg, #fff9e6, #fff5d6)"
+                            : "#ffffff",
+                        transition: "all 0.2s ease",
+                        marginBottom: "4px",
+                        boxSizing: "border-box",
+                        cursor: "pointer",
+                      }}
+                      onClick={() => handleUserClick(donor.x)}
+                      onMouseEnter={(e: React.MouseEvent<HTMLDivElement>) => {
+                        e.currentTarget.style.transform = "translateY(-2px)";
+                        e.currentTarget.style.boxShadow =
+                          "0 4px 12px rgba(0,0,0,0.1)";
+                      }}
+                      onMouseLeave={(e: React.MouseEvent<HTMLDivElement>) => {
+                        e.currentTarget.style.transform = "translateY(0)";
+                        e.currentTarget.style.boxShadow = "none";
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "8px",
+                          width: "100%",
+                        }}
+                      >
+                        {/* 순위 */}
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            minWidth: "50px",
+                            flexShrink: 0,
+                          }}
+                        >
+                          {rankIcon ? (
+                            <span
+                              style={{ fontSize: "24px", marginRight: "8px" }}
+                            >
+                              {rankIcon}
+                            </span>
+                          ) : (
+                            <div
+                              style={{
+                                width: "24px",
+                                height: "24px",
+                                borderRadius: "50%",
+                                background:
+                                  rankColor === "#FFD700"
+                                    ? "#fff3cd"
+                                    : "#f8f9fa",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                border: `2px solid ${rankColor}`,
+                                fontSize: "12px",
+                                fontWeight: "bold",
+                                color: rankColor,
+                              }}
+                            >
+                              {rank}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* 사용자 정보 */}
+                        <div
+                          style={{ flex: 1, minWidth: 0, overflow: "hidden" }}
+                        >
+                          <div
+                            style={{
+                              fontWeight: "bold",
+                              fontSize: "16px",
+                              color: "#495057",
+                              whiteSpace: "nowrap",
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                            }}
+                          >
+                            {donor.x}
+                          </div>
+                        </div>
+
+                        {/* 치즈 수 */}
+                        <div
+                          style={{
+                            textAlign: "right",
+                            minWidth: "150px",
+                            flexShrink: 0,
+                          }}
+                        >
+                          <div
+                            style={{
+                              fontSize: "16px",
+                              fontWeight: "bold",
+                              color: "#28a745",
+                            }}
+                          >
+                            {donor.y.toLocaleString()} 치즈🧀 ({donor.count})
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+            </SpaceBetween>
           )}
         </Container>
       </Grid>
