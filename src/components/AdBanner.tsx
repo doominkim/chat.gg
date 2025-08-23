@@ -15,11 +15,57 @@ const AdBanner: React.FC<AdBannerProps> = ({
   showPlaceholder = true,
 }) => {
   const [isVisible, setIsVisible] = useState(true);
+  const [currentBanner, setCurrentBanner] = useState(0);
+
+  // 새로고침마다 랜덤 배너 선택
+  React.useEffect(() => {
+    const randomBanner = Math.floor(Math.random() * 3);
+    setCurrentBanner(randomBanner);
+  }, []);
 
   const handleClose = () => {
     setIsVisible(false);
     document.body.classList.add("ad-banner-closed");
   };
+
+  // 3개의 다른 배너 데이터
+  const bannerData = [
+    {
+      title: "🎮 치지직 채팅 분석 도구",
+      description: "실시간 채팅 통계와 분석을 한눈에 확인하세요",
+      rating: "⭐ 4.8/5.0",
+      users: "10,000+ 사용자",
+      price: "무료",
+      cta: "지금 시작하기",
+      imageColor: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+      buttonColor: "linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%)",
+      icon: "🎮",
+    },
+    {
+      title: "📊 실시간 채팅 모니터링",
+      description: "스트리머와 시청자 간의 소통을 분석해보세요",
+      rating: "⭐ 4.9/5.0",
+      users: "15,000+ 사용자",
+      price: "무료",
+      cta: "무료 체험하기",
+      imageColor: "linear-gradient(135deg, #11998e 0%, #38ef7d 100%)",
+      buttonColor: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+      icon: "📊",
+    },
+    {
+      title: "🔥 인기 채팅 트렌드",
+      description: "가장 핫한 채팅 키워드와 트렌드를 발견하세요",
+      rating: "⭐ 4.7/5.0",
+      users: "8,500+ 사용자",
+      price: "무료",
+      cta: "트렌드 보기",
+      imageColor: "linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%)",
+      buttonColor: "linear-gradient(135deg, #11998e 0%, #38ef7d 100%)",
+      icon: "🔥",
+    },
+  ];
+
+  const currentBannerInfo = bannerData[currentBanner];
 
   if (!isVisible) {
     return null;
@@ -137,8 +183,7 @@ const AdBanner: React.FC<AdBannerProps> = ({
                 style={{
                   width: "100px",
                   height: "60px",
-                  background:
-                    "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                  background: currentBannerInfo.imageColor,
                   borderRadius: "8px",
                   display: "flex",
                   alignItems: "center",
@@ -146,7 +191,7 @@ const AdBanner: React.FC<AdBannerProps> = ({
                   fontSize: "20px",
                   color: "white",
                   flexShrink: 0,
-                  boxShadow: "0 2px 8px rgba(102, 126, 234, 0.3)",
+                  boxShadow: "0 2px 8px rgba(0,0,0,0.2)",
                   position: "relative",
                   overflow: "hidden",
                 }}
@@ -163,7 +208,9 @@ const AdBanner: React.FC<AdBannerProps> = ({
                     opacity: 0.6,
                   }}
                 />
-                <span style={{ zIndex: 1, fontWeight: "bold" }}>🎮</span>
+                <span style={{ zIndex: 1, fontWeight: "bold" }}>
+                  {currentBannerInfo.icon}
+                </span>
               </div>
 
               {/* 광고 텍스트 영역 */}
@@ -190,7 +237,7 @@ const AdBanner: React.FC<AdBannerProps> = ({
                     textOverflow: "ellipsis",
                   }}
                 >
-                  🎮 치지직 채팅 분석 도구
+                  {currentBannerInfo.title}
                 </div>
                 <div
                   style={{
@@ -203,7 +250,7 @@ const AdBanner: React.FC<AdBannerProps> = ({
                     textOverflow: "ellipsis",
                   }}
                 >
-                  실시간 채팅 통계와 분석을 한눈에 확인하세요
+                  {currentBannerInfo.description}
                 </div>
                 <div
                   style={{
@@ -216,11 +263,11 @@ const AdBanner: React.FC<AdBannerProps> = ({
                     flexWrap: "wrap",
                   }}
                 >
-                  <span>⭐ 4.8/5.0</span>
+                  <span>{currentBannerInfo.rating}</span>
                   <span>•</span>
-                  <span>10,000+ 사용자</span>
+                  <span>{currentBannerInfo.users}</span>
                   <span>•</span>
-                  <span>무료</span>
+                  <span>{currentBannerInfo.price}</span>
                 </div>
                 <div
                   style={{
@@ -239,8 +286,7 @@ const AdBanner: React.FC<AdBannerProps> = ({
               {/* CTA 버튼 */}
               <div
                 style={{
-                  background:
-                    "linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%)",
+                  background: currentBannerInfo.buttonColor,
                   color: "white",
                   padding: "8px 16px",
                   borderRadius: "20px",
@@ -249,7 +295,7 @@ const AdBanner: React.FC<AdBannerProps> = ({
                   cursor: "pointer",
                   transition: "all 0.3s ease",
                   flexShrink: 0,
-                  boxShadow: "0 4px 15px rgba(255, 107, 107, 0.3)",
+                  boxShadow: "0 4px 15px rgba(0,0,0,0.2)",
                   textAlign: "center",
                   minWidth: "100px",
                   position: "relative",
@@ -258,16 +304,16 @@ const AdBanner: React.FC<AdBannerProps> = ({
                 onMouseEnter={(e) => {
                   e.currentTarget.style.transform = "translateY(-2px)";
                   e.currentTarget.style.boxShadow =
-                    "0 6px 20px rgba(255, 107, 107, 0.4)";
+                    "0 6px 20px rgba(0,0,0,0.3)";
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.transform = "translateY(0)";
                   e.currentTarget.style.boxShadow =
-                    "0 4px 15px rgba(255, 107, 107, 0.3)";
+                    "0 4px 15px rgba(0,0,0,0.2)";
                 }}
               >
                 <span style={{ position: "relative", zIndex: 1 }}>
-                  지금 시작하기
+                  {currentBannerInfo.cta}
                 </span>
                 <div
                   style={{

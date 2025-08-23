@@ -1,6 +1,6 @@
 // src/pages/Dashboard.tsx
 import React, { useState, useEffect, useMemo, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import {
   Container,
   Header,
@@ -133,6 +133,13 @@ const mapTopDonorsFromSummary = (res: SummaryResponse) =>
 // 컴포넌트 시작
 export default function Dashboard() {
   const navigate = useNavigate();
+  const { channelId } = useParams<{ channelId: string }>();
+
+  // channelId가 없으면 채널 선택 페이지로 리다이렉트
+  if (!channelId) {
+    navigate("/channels");
+    return null;
+  }
 
   const handleUserClick = async (userName: string) => {
     try {
@@ -219,33 +226,33 @@ export default function Dashboard() {
 
   // API 호출 함수들을 useCallback으로 메모이제이션
   const overviewApiCall = useCallback(
-    () => dashboardService.getDashboardOverview(),
-    []
+    () => dashboardService.getDashboardOverview(Number(channelId)),
+    [channelId]
   );
 
   const chatTypeApiCall = useCallback(
-    () => dashboardService.getChatTypeDistribution(),
-    []
+    () => dashboardService.getChatTypeDistribution(Number(channelId)),
+    [channelId]
   );
 
   const hourlyChatTypeApiCall = useCallback(
-    () => dashboardService.getHourlyChatTypeDistribution(),
-    []
+    () => dashboardService.getHourlyChatTypeDistribution(Number(channelId)),
+    [channelId]
   );
 
   const chatRankingApiCall = useCallback(
-    () => dashboardService.getChatRanking(),
-    []
+    () => dashboardService.getChatRanking(Number(channelId)),
+    [channelId]
   );
 
   const donationStreamerRankingApiCall = useCallback(
-    () => dashboardService.getDonationStreamerRanking(),
-    []
+    () => dashboardService.getDonationStreamerRanking(Number(channelId)),
+    [channelId]
   );
 
   const donationDonorRankingApiCall = useCallback(
-    () => dashboardService.getDonationDonorRanking(),
-    []
+    () => dashboardService.getDonationDonorRanking(Number(channelId)),
+    [channelId]
   );
 
   // 상단 3카드 상태 - 새로운 API 사용
@@ -349,30 +356,24 @@ export default function Dashboard() {
           lastUpdate: new Date().toLocaleString("ko-KR"),
         },
       ];
-  // Line - 시간대별 채팅 수 API 데이터
+  // Line - 시간대별 채팅 수 API 데이터 (5분 단위)
   const chatCountData = hourlyData?.data?.hourlyData
     ? hourlyData.data.hourlyData.map((item) => ({
-        x: new Date(
-          `${today}T${String(item.hour).padStart(2, "0")}:00:00+09:00`
-        ),
+        x: new Date(`${today}T${item.hour}:00+09:00`),
         y: item.chatTypes.chat,
       }))
     : [];
 
   const blindCountData = hourlyData?.data?.hourlyData
     ? hourlyData.data.hourlyData.map((item) => ({
-        x: new Date(
-          `${today}T${String(item.hour).padStart(2, "0")}:00:00+09:00`
-        ),
+        x: new Date(`${today}T${item.hour}:00+09:00`),
         y: item.chatTypes.blind,
       }))
     : [];
 
   const donationCountData = hourlyData?.data?.hourlyData
     ? hourlyData.data.hourlyData.map((item) => ({
-        x: new Date(
-          `${today}T${String(item.hour).padStart(2, "0")}:00:00+09:00`
-        ),
+        x: new Date(`${today}T${item.hour}:00+09:00`),
         y: item.chatTypes.donation,
       }))
     : [];
@@ -381,16 +382,11 @@ export default function Dashboard() {
   const allData = [...chatCountData, ...blindCountData, ...donationCountData];
   const maxY = allData.length > 0 ? Math.max(...allData.map((d) => d.y)) : 0;
 
-  // 피크 포인트 계산
+  // 피크 포인트 계산 (5분 단위)
   const peakPoint =
     hourlyData?.data?.summary?.peakHour !== undefined
       ? {
-          x: new Date(
-            `${today}T${String(hourlyData.data.summary.peakHour).padStart(
-              2,
-              "0"
-            )}:00:00+09:00`
-          ),
+          x: new Date(`${today}T${hourlyData.data.summary.peakHour}:00+09:00`),
           y: hourlyData.data.summary.peakChats,
         }
       : null;
@@ -589,14 +585,7 @@ export default function Dashboard() {
       </Box>
 
       {/* 상단 요약 */}
-      <Grid
-        gridDefinition={[
-          { colspan: 3 },
-          { colspan: 3 },
-          { colspan: 3 },
-          { colspan: 3 },
-        ]}
-      >
+      <Grid gridDefinition={[{ colspan: 6 }, { colspan: 6 }]}>
         <Container
           fitHeight
           header={<Header variant="h2">💤 오늘의 누적 채팅수</Header>}
@@ -643,49 +632,6 @@ export default function Dashboard() {
                 <Badge color={donBadge.color}>
                   {donBadge.arrow} {donBadge.pct}%
                 </Badge>
-              </>
-            )}
-          </SpaceBetween>
-        </Container>
-        <Container header={<Header variant="h2">📺 LIVE 채널</Header>}>
-          <SpaceBetween size="s">
-            {loading ? (
-              <Box textAlign="center" padding="xl">
-                로딩 중...
-              </Box>
-            ) : error ? (
-              <Box textAlign="center" padding="xl" color="text-status-error">
-                오류: {err}
-              </Box>
-            ) : (
-              <>
-                <Box fontSize="display-l" fontWeight="bold">
-                  {fmtNumber(overviewData?.data?.activeChannelCount || 0)}
-                </Box>
-                <Badge color="blue">활성 채널</Badge>
-              </>
-            )}
-          </SpaceBetween>
-        </Container>
-        <Container
-          fitHeight
-          header={<Header variant="h2">👥 현재 시청자수</Header>}
-        >
-          <SpaceBetween size="s">
-            {loading ? (
-              <Box textAlign="center" padding="xl">
-                로딩 중...
-              </Box>
-            ) : error ? (
-              <Box textAlign="center" padding="xl" color="text-status-error">
-                오류: {err}
-              </Box>
-            ) : (
-              <>
-                <Box fontSize="display-l" fontWeight="bold">
-                  {fmtNumber(overviewData?.data?.currentViewerCount || 0)}
-                </Box>
-                <Badge color="green">실시간</Badge>
               </>
             )}
           </SpaceBetween>
@@ -756,10 +702,10 @@ export default function Dashboard() {
               yTitle="채팅 수"
               hideFilter
               ariaLabel="채팅 수 라인 차트"
-              xTickFormatter={(date) => `${date.getHours()}시`}
+              xTickFormatter={(date) => `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`}
               detailPopoverSeriesContent={({ series, x, y }) => ({
                 key: `🌟 ${series.title}`,
-                value: `${y}개 (${x.getHours()}시)`,
+                value: `${y}개 (${x.getHours().toString().padStart(2, '0')}:${x.getMinutes().toString().padStart(2, '0')})`,
               })}
             />
           )}

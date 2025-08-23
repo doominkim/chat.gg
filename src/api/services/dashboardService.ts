@@ -67,7 +67,7 @@ export interface HourlyChatTypeDistribution {
   timestamp: string;
   data: {
     hourlyData: Array<{
-      hour: number;
+      hour: string;
       chatTypes: {
         chat: number;
         blind: number;
@@ -76,7 +76,7 @@ export interface HourlyChatTypeDistribution {
     }>;
     summary: {
       totalChats: number;
-      peakHour: number;
+      peakHour: string;
       peakChats: number;
     };
   };
@@ -152,6 +152,20 @@ export const dashboardService = {
   },
 
   async getDashboardOverview(
+    channelId?: number
+  ): Promise<ApiResponse<DashboardOverview>> {
+    const queryParams = new URLSearchParams();
+    if (channelId) {
+      queryParams.append("channelId", channelId.toString());
+    }
+    const queryString = queryParams.toString();
+    const endpoint = queryString
+      ? `/dashboard/overview?${queryString}`
+      : "/dashboard/overview";
+    return apiClient.get<DashboardOverview>(endpoint);
+  },
+
+  async getDashboardOverviewByDate(
     period?: string
   ): Promise<ApiResponse<DashboardOverview>> {
     const queryParams = new URLSearchParams();
@@ -166,6 +180,20 @@ export const dashboardService = {
   },
 
   async getChatTypeDistribution(
+    channelId?: number
+  ): Promise<ApiResponse<ChatTypeDistribution>> {
+    const queryParams = new URLSearchParams();
+    if (channelId) {
+      queryParams.append("channelId", channelId.toString());
+    }
+    const queryString = queryParams.toString();
+    const endpoint = queryString
+      ? `/dashboard/chat-type/distribution?${queryString}`
+      : "/dashboard/chat-type/distribution";
+    return apiClient.get<ChatTypeDistribution>(endpoint);
+  },
+
+  async getChatTypeDistributionByDate(
     start?: string,
     end?: string
   ): Promise<ApiResponse<ChatTypeDistribution>> {
@@ -184,6 +212,20 @@ export const dashboardService = {
   },
 
   async getHourlyChatTypeDistribution(
+    channelId?: number
+  ): Promise<ApiResponse<HourlyChatTypeDistribution>> {
+    const queryParams = new URLSearchParams();
+    if (channelId) {
+      queryParams.append("channelId", channelId.toString());
+    }
+    const queryString = queryParams.toString();
+    const endpoint = queryString
+      ? `/dashboard/chat-type/distribution/hourly?${queryString}`
+      : "/dashboard/chat-type/distribution/hourly";
+    return apiClient.get<HourlyChatTypeDistribution>(endpoint);
+  },
+
+  async getHourlyChatTypeDistributionByDate(
     start?: string,
     end?: string
   ): Promise<ApiResponse<HourlyChatTypeDistribution>> {
@@ -201,7 +243,21 @@ export const dashboardService = {
     return apiClient.get<HourlyChatTypeDistribution>(endpoint);
   },
 
-  async getChatRanking(params?: {
+  async getChatRanking(channelId?: number): Promise<ApiResponse<ChatRanking>> {
+    const queryParams = new URLSearchParams();
+    if (channelId) {
+      queryParams.append("channelId", channelId.toString());
+    }
+
+    const queryString = queryParams.toString();
+    const endpoint = queryString
+      ? `/dashboard/chat-ranking?${queryString}`
+      : "/dashboard/chat-ranking";
+
+    return apiClient.get<ChatRanking>(endpoint);
+  },
+
+  async getChatRankingByDate(params?: {
     period?: string;
     channelId?: string;
   }): Promise<ApiResponse<ChatRanking>> {
@@ -221,7 +277,23 @@ export const dashboardService = {
     return apiClient.get<ChatRanking>(endpoint);
   },
 
-  async getDonationStreamerRanking(params?: {
+  async getDonationStreamerRanking(
+    channelId?: number
+  ): Promise<ApiResponse<DonationStreamerRanking>> {
+    const queryParams = new URLSearchParams();
+    if (channelId) {
+      queryParams.append("channelId", channelId.toString());
+    }
+
+    const queryString = queryParams.toString();
+    const endpoint = queryString
+      ? `/dashboard/donation-streamer-ranking?${queryString}`
+      : "/dashboard/donation-streamer-ranking";
+
+    return apiClient.get<DonationStreamerRanking>(endpoint);
+  },
+
+  async getDonationStreamerRankingByDate(params?: {
     period?: string;
     channelId?: string;
   }): Promise<ApiResponse<DonationStreamerRanking>> {
@@ -241,7 +313,23 @@ export const dashboardService = {
     return apiClient.get<DonationStreamerRanking>(endpoint);
   },
 
-  async getDonationDonorRanking(params?: {
+  async getDonationDonorRanking(
+    channelId?: number
+  ): Promise<ApiResponse<DonationDonorRanking>> {
+    const queryParams = new URLSearchParams();
+    if (channelId) {
+      queryParams.append("channelId", channelId.toString());
+    }
+
+    const queryString = queryParams.toString();
+    const endpoint = queryString
+      ? `/dashboard/donation-donor-ranking?${queryString}`
+      : "/dashboard/donation-donor-ranking";
+
+    return apiClient.get<DonationDonorRanking>(endpoint);
+  },
+
+  async getDonationDonorRankingByDate(params?: {
     period?: string;
     channelId?: string;
   }): Promise<ApiResponse<DonationDonorRanking>> {

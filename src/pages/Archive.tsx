@@ -119,18 +119,22 @@ export default function Archive() {
 
   // API 호출 함수들을 useCallback으로 메모이제이션
   const overviewApiCall = useCallback(
-    () => dashboardService.getDashboardOverview(selectedDate),
+    () => dashboardService.getDashboardOverviewByDate(selectedDate),
     [selectedDate]
   );
 
   const chatTypeApiCall = useCallback(
-    () => dashboardService.getChatTypeDistribution(selectedDate, selectedDate),
+    () =>
+      dashboardService.getChatTypeDistributionByDate(
+        selectedDate,
+        selectedDate
+      ),
     [selectedDate]
   );
 
   const hourlyChatTypeApiCall = useCallback(
     () =>
-      dashboardService.getHourlyChatTypeDistribution(
+      dashboardService.getHourlyChatTypeDistributionByDate(
         selectedDate,
         selectedDate
       ),
@@ -138,17 +142,21 @@ export default function Archive() {
   );
 
   const chatRankingApiCall = useCallback(
-    () => dashboardService.getChatRanking({ period: selectedDate }),
+    () => dashboardService.getChatRankingByDate({ period: selectedDate }),
     [selectedDate]
   );
 
   const donationStreamerRankingApiCall = useCallback(
-    () => dashboardService.getDonationStreamerRanking({ period: selectedDate }),
+    () =>
+      dashboardService.getDonationStreamerRankingByDate({
+        period: selectedDate,
+      }),
     [selectedDate]
   );
 
   const donationDonorRankingApiCall = useCallback(
-    () => dashboardService.getDonationDonorRanking({ period: selectedDate }),
+    () =>
+      dashboardService.getDonationDonorRankingByDate({ period: selectedDate }),
     [selectedDate]
   );
 
@@ -259,30 +267,24 @@ export default function Archive() {
         },
       ];
 
-  // Line - 시간대별 채팅 수 API 데이터 (대시보드와 동일한 구조)
+  // Line - 시간대별 채팅 수 API 데이터 (5분 단위)
   const chatCountData = hourlyData?.data?.hourlyData
     ? hourlyData.data.hourlyData.map((item) => ({
-        x: new Date(
-          `${selectedDate}T${String(item.hour).padStart(2, "0")}:00:00+09:00`
-        ),
+        x: new Date(`${selectedDate}T${item.hour}:00+09:00`),
         y: item.chatTypes.chat,
       }))
     : [];
 
   const blindCountData = hourlyData?.data?.hourlyData
     ? hourlyData.data.hourlyData.map((item) => ({
-        x: new Date(
-          `${selectedDate}T${String(item.hour).padStart(2, "0")}:00:00+09:00`
-        ),
+        x: new Date(`${selectedDate}T${item.hour}:00+09:00`),
         y: item.chatTypes.blind,
       }))
     : [];
 
   const donationCountData = hourlyData?.data?.hourlyData
     ? hourlyData.data.hourlyData.map((item) => ({
-        x: new Date(
-          `${selectedDate}T${String(item.hour).padStart(2, "0")}:00:00+09:00`
-        ),
+        x: new Date(`${selectedDate}T${item.hour}:00+09:00`),
         y: item.chatTypes.donation,
       }))
     : [];
@@ -291,14 +293,12 @@ export default function Archive() {
   const allData = [...chatCountData, ...blindCountData, ...donationCountData];
   const maxY = allData.length > 0 ? Math.max(...allData.map((d) => d.y)) : 0;
 
-  // 피크 포인트 계산
+  // 피크 포인트 계산 (5분 단위)
   const peakPoint =
     hourlyData?.data?.summary?.peakHour !== undefined
       ? {
           x: new Date(
-            `${selectedDate}T${String(
-              hourlyData.data.summary.peakHour
-            ).padStart(2, "0")}:00:00+09:00`
+            `${selectedDate}T${hourlyData.data.summary.peakHour}:00+09:00`
           ),
           y: hourlyData.data.summary.peakChats,
         }
@@ -519,10 +519,10 @@ export default function Archive() {
               yTitle="채팅 수"
               hideFilter
               ariaLabel="채팅 수 라인 차트"
-              xTickFormatter={(date) => `${date.getHours()}시`}
+              xTickFormatter={(date) => `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`}
               detailPopoverSeriesContent={({ series, x, y }) => ({
                 key: `🌟 ${series.title}`,
-                value: `${y}개 (${x.getHours()}시)`,
+                value: `${y}개 (${x.getHours().toString().padStart(2, '0')}:${x.getMinutes().toString().padStart(2, '0')})`,
               })}
             />
           )}

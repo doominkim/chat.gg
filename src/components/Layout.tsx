@@ -108,12 +108,12 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       <TopNavigation
         // SPA 네비게이션: 새로고침 방지
         identity={{
-          href: "/dashboard",
+          href: "/channels",
           title: "　F_ Your Chzzk",
           logo: { src: "/logo.png" },
           onFollow: (e) => {
             e.preventDefault();
-            navigate("/dashboard");
+            navigate("/channels");
           },
         }}
         utilities={[{ type: "button", text: "Archive", href: "/archive" }]}
