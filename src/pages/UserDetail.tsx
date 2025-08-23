@@ -8,6 +8,7 @@ import {
   PieChart,
   SpaceBetween,
   Spinner,
+  Button,
 } from "@cloudscape-design/components";
 import type { DateRangePickerProps } from "@cloudscape-design/components";
 import ReactWordCloud from "react-d3-cloud";
@@ -432,6 +433,19 @@ const UserDetail: React.FC = () => {
                 margin={{ left: "l" }}
               ></Box>
             </Header>
+            <Box margin={{ top: "m" }}>
+              <Button
+                variant="primary"
+                onClick={() => {
+                  if (userIdHash) {
+                    navigate(`/personality-analysis/${userIdHash}`);
+                  }
+                }}
+                disabled={!userIdHash}
+              >
+                🧠 채팅 내역 분석하기
+              </Button>
+            </Box>
           </Box>
           <Box>
             <DateRangePicker

@@ -91,6 +91,89 @@ export interface WatchedStreamerItem {
   percentage?: number;
 }
 
+export interface PersonalityAnalysis {
+  message: string;
+  timestamp: string;
+  userId: string;
+  data: {
+    personalityType: string;
+    personalityCode: string;
+    personalityEmoji: string;
+    personalityTagline: string;
+    personalityAka: string[];
+    summaryOneLine: string;
+    sections: {
+      viewingBehavior: {
+        title: string;
+        content: string;
+        metrics: {
+          HHI: number;
+          topChannel: string;
+          topSharePct: number;
+        };
+        evidence: string[];
+        confidence: number;
+      };
+      loyaltyDiversity: {
+        title: string;
+        content: string;
+        metrics: {
+          loyaltyLabel: string;
+          channelCount: number;
+        };
+        evidence: string[];
+        confidence: number;
+      };
+      activityPattern: {
+        title: string;
+        content: string;
+        metrics: {
+          nocturnalScore: number;
+          peakHourKST: number;
+        };
+        evidence: string[];
+        confidence: number;
+      };
+      donationPotential: {
+        title: string;
+        content: string;
+        score: number;
+        evidence: string[];
+        actions: string[];
+        confidence: number;
+      };
+      chatStyle: {
+        title: string;
+        content: string;
+        metrics: {
+          exclamationRatio: number;
+          questionRatio: number;
+          independentTurnRatio: number;
+        };
+        evidence: string[];
+        confidence: number;
+      };
+      emotionalTone: {
+        title: string;
+        content: string;
+        metrics: {
+          positiveCuePct: number;
+          negativeCuePct: number;
+        };
+        evidence: string[];
+        confidence: number;
+      };
+      demographics: {
+        title: string;
+        content: string;
+        assumptions: string[];
+        counterExamples: string[];
+        confidence: number;
+      };
+    };
+  };
+}
+
 export const userDetailService = {
   // 기존 별칭 기반 API들은 유지하되, 신규 userId 기반 엔드포인트 추가
   async getUserAnalysis(
@@ -172,6 +255,25 @@ export const userDetailService = {
       return response;
     } catch (error) {
       console.error("시청 스트리머 API 호출 실패:", error);
+      throw error;
+    }
+  },
+
+  async getPersonalityAnalysis(
+    userId: string
+  ): Promise<ApiResponse<PersonalityAnalysis>> {
+    const endpoint = `/user/${encodeURIComponent(userId)}/personality-analysis`;
+    console.log("userDetailService.getPersonalityAnalysis API 호출:", endpoint);
+
+    try {
+      const response = await apiClient.get<PersonalityAnalysis>(endpoint);
+      console.log(
+        "userDetailService.getPersonalityAnalysis API 응답:",
+        response
+      );
+      return response;
+    } catch (error) {
+      console.error("성격 분석 API 호출 실패:", error);
       throw error;
     }
   },

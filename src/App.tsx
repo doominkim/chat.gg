@@ -8,6 +8,7 @@ import Archive from "./pages/Archive";
 import NotFoundUser from "./pages/NotFoundUser";
 import ChatAnalysis from "./pages/ChatAnalysis";
 import UserSelect from "./pages/UserSelect";
+import PersonalityAnalysis from "./pages/PersonalityAnalysis";
 import "@cloudscape-design/global-styles/index.css";
 import {
   BrowserRouter as Router,
@@ -27,6 +28,10 @@ const App: React.FC = () => {
           <Route path="/dashboard/:channelId" element={<Dashboard />} />
           <Route path="/user-select" element={<UserSelect />} />
           <Route path="/user/:nickname" element={<UserDetail />} />
+          <Route
+            path="/personality-analysis/:userId"
+            element={<PersonalityAnalysis />}
+          />
           <Route path="/archive" element={<Archive />} />
           <Route path="/chat-analysis" element={<ChatAnalysis />} />
           <Route path="/not-found" element={<NotFoundUser />} />
