@@ -249,18 +249,28 @@ export default function Dashboard() {
 
   // API 호출 함수들을 useCallback으로 메모이제이션
   const overviewApiCall = useCallback(
-    () => dashboardService.getDashboardOverview(Number(channelId)),
-    [channelId]
+    () => dashboardService.getDashboardOverviewByDate(start, Number(channelId)),
+    [start, channelId]
   );
 
   const chatTypeApiCall = useCallback(
-    () => dashboardService.getChatTypeDistribution(Number(channelId)),
-    [channelId]
+    () =>
+      dashboardService.getChatTypeDistributionByDate(
+        start,
+        end,
+        Number(channelId)
+      ),
+    [start, end, channelId]
   );
 
   const hourlyChatTypeApiCall = useCallback(
-    () => dashboardService.getHourlyChatTypeDistribution(Number(channelId)),
-    [channelId]
+    () =>
+      dashboardService.getHourlyChatTypeDistributionByDate(
+        start,
+        end,
+        Number(channelId)
+      ),
+    [start, end, channelId]
   );
 
   const chatRankingApiCall = useCallback(

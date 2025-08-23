@@ -166,11 +166,15 @@ export const dashboardService = {
   },
 
   async getDashboardOverviewByDate(
-    period?: string
+    period?: string,
+    channelId?: number
   ): Promise<ApiResponse<DashboardOverview>> {
     const queryParams = new URLSearchParams();
     if (period) {
       queryParams.append("period", period);
+    }
+    if (channelId) {
+      queryParams.append("channelId", channelId.toString());
     }
     const queryString = queryParams.toString();
     const endpoint = queryString
@@ -195,7 +199,8 @@ export const dashboardService = {
 
   async getChatTypeDistributionByDate(
     start?: string,
-    end?: string
+    end?: string,
+    channelId?: number
   ): Promise<ApiResponse<ChatTypeDistribution>> {
     const queryParams = new URLSearchParams();
     if (start) {
@@ -203,6 +208,9 @@ export const dashboardService = {
     }
     if (end) {
       queryParams.append("end", end);
+    }
+    if (channelId) {
+      queryParams.append("channelId", channelId.toString());
     }
     const queryString = queryParams.toString();
     const endpoint = queryString
@@ -227,7 +235,8 @@ export const dashboardService = {
 
   async getHourlyChatTypeDistributionByDate(
     start?: string,
-    end?: string
+    end?: string,
+    channelId?: number
   ): Promise<ApiResponse<HourlyChatTypeDistribution>> {
     const queryParams = new URLSearchParams();
     if (start) {
@@ -235,6 +244,9 @@ export const dashboardService = {
     }
     if (end) {
       queryParams.append("end", end);
+    }
+    if (channelId) {
+      queryParams.append("channelId", channelId.toString());
     }
     const queryString = queryParams.toString();
     const endpoint = queryString

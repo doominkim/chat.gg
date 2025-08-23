@@ -550,16 +550,9 @@ const UserDetail: React.FC = () => {
         </SpaceBetween>
       </Box>
 
-      <Grid gridDefinition={[{ colspan: 7 }, { colspan: 5 }]}>
-        {/* 왼쪽 7칸: 2x2 구조 내부 정렬 */}
-        <Grid
-          gridDefinition={[
-            { colspan: 7 },
-            { colspan: 5 },
-            { colspan: 7 },
-            { colspan: 5 },
-          ]}
-        >
+      <Grid gridDefinition={[{ colspan: 6 }, { colspan: 6 }]}>
+        {/* 왼쪽 6칸: 분석 섹션들 */}
+        <SpaceBetween size="l">
           {/* 채팅 유형 분포 (PieChart) */}
           <Container
             fitHeight
@@ -626,9 +619,9 @@ const UserDetail: React.FC = () => {
               </Box>
             </SpaceBetween>
           </Container>
-        </Grid>
+        </SpaceBetween>
 
-        {/* 오른쪽 5칸: 채팅 내역 전체 */}
+        {/* 오른쪽 6칸: 채팅 내역 */}
         <Container fitHeight header={<Header>채팅 내역</Header>}>
           <div style={{ minHeight: "800px", height: "100%" }}>
             <ChatList params={chatFilterParams} />
