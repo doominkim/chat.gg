@@ -13,8 +13,12 @@ import {
   BarChart,
   Flashbar,
   Link,
+  DateRangePicker,
 } from "@cloudscape-design/components";
-import type { FlashbarProps } from "@cloudscape-design/components";
+import type {
+  FlashbarProps,
+  DateRangePickerProps,
+} from "@cloudscape-design/components";
 import { useApi } from "../api/hooks";
 import { dashboardService, userService } from "../api/services";
 import type {
@@ -178,6 +182,14 @@ export default function Dashboard() {
     }
   };
 
+  // 날짜 필터 상태
+  const [selectedDate, setSelectedDate] =
+    useState<DateRangePickerProps.Value | null>({
+      type: "absolute",
+      startDate: todayKST(),
+      endDate: todayKST(),
+    });
+
   // 실시간 날짜 및 시간 표시 (요일 포함)
   const [currentTime, setCurrentTime] = useState(() => {
     const now = new Date();
@@ -224,6 +236,17 @@ export default function Dashboard() {
     },
   ]);
 
+  // 선택된 날짜 파싱
+  const { start, end } = useMemo(() => {
+    if (selectedDate && selectedDate.type === "absolute") {
+      return {
+        start: selectedDate.startDate || todayKST(),
+        end: selectedDate.endDate || todayKST(),
+      };
+    }
+    return { start: todayKST(), end: todayKST() };
+  }, [selectedDate]);
+
   // API 호출 함수들을 useCallback으로 메모이제이션
   const overviewApiCall = useCallback(
     () => dashboardService.getDashboardOverview(Number(channelId)),
@@ -241,13 +264,21 @@ export default function Dashboard() {
   );
 
   const chatRankingApiCall = useCallback(
-    () => dashboardService.getChatRanking(Number(channelId)),
-    [channelId]
+    () =>
+      dashboardService.getChatRankingByDate({
+        period: start,
+        channelId: channelId,
+      }),
+    [channelId, start]
   );
 
   const donationDonorRankingApiCall = useCallback(
-    () => dashboardService.getDonationDonorRanking(Number(channelId)),
-    [channelId]
+    () =>
+      dashboardService.getDonationDonorRankingByDate({
+        period: start,
+        channelId: channelId,
+      }),
+    [channelId, start]
   );
 
   // 상단 3카드 상태 - 새로운 API 사용
@@ -551,6 +582,47 @@ export default function Dashboard() {
                 {currentTime}
               </Box>
             </Header>
+            <Box margin={{ top: "m" }}>
+              <DateRangePicker
+                value={selectedDate}
+                onChange={({ detail }) => setSelectedDate(detail.value)}
+                relativeOptions={[
+                  {
+                    key: "previous-1-day",
+                    amount: 1,
+                    unit: "day",
+                    type: "relative",
+                  },
+                  {
+                    key: "previous-7-days",
+                    amount: 7,
+                    unit: "day",
+                    type: "relative",
+                  },
+                  {
+                    key: "previous-30-days",
+                    amount: 30,
+                    unit: "day",
+                    type: "relative",
+                  },
+                ]}
+                isValidRange={() => ({ valid: true })}
+                i18nStrings={{
+                  todayAriaLabel: "오늘",
+                  nextMonthAriaLabel: "다음 달",
+                  previousMonthAriaLabel: "이전 달",
+                  customRelativeRangeDurationLabel: "기간",
+                  startDateLabel: "시작일",
+                  endDateLabel: "종료일",
+                  clearButtonLabel: "지우기",
+                  cancelButtonLabel: "취소",
+                  applyButtonLabel: "적용",
+                  relativeModeTitle: "상대적 범위",
+                  absoluteModeTitle: "절대적 범위",
+                }}
+                placeholder="날짜 범위를 선택하세요"
+              />
+            </Box>
           </Box>
           <Flashbar items={items} />
         </SpaceBetween>
@@ -611,7 +683,7 @@ export default function Dashboard() {
       </Grid>
 
       {/* 분석 섹션 */}
-      <Grid gridDefinition={[{ colspan: 4 }, { colspan: 4 }, { colspan: 4 }]}>
+      <Grid gridDefinition={[{ colspan: 6 }, { colspan: 6 }]}>
         <Container
           fitHeight
           header={<Header variant="h2">📊 채팅 유형 분포</Header>}
