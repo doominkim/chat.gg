@@ -109,33 +109,13 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         // SPA 네비게이션: 새로고침 방지
         identity={{
           href: "/",
-          logo: { src: "/logo.png" },
+          title: "chat.gg",
           onFollow: (e) => {
             e.preventDefault();
             navigate("/");
           },
         }}
-        utilities={[
-          {
-            type: "button",
-            text: "홈",
-            href: "/",
-            onClick: (e) => {
-              e.preventDefault();
-              navigate("/");
-            },
-          },
-          {
-            type: "button",
-            text: "서비스 소개",
-            href: "/about",
-            onClick: (e) => {
-              e.preventDefault();
-              navigate("/about");
-            },
-          },
-          { type: "button", text: "Archive", href: "/archive" },
-        ]}
+        utilities={[]}
         search={
           <FormField errorText={status || undefined}>
             <Autosuggest

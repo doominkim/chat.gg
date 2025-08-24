@@ -110,28 +110,6 @@ export default function Home() {
             >
               시작하기
             </button>
-            <button
-              onClick={() => navigate("/about")}
-              style={{
-                color: "white",
-                border: "2px solid white",
-                padding: "14px 30px",
-                fontSize: "18px",
-                fontWeight: "600",
-                borderRadius: "12px",
-                background: "transparent",
-                cursor: "pointer",
-                transition: "transform 0.2s ease",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = "translateY(-2px)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = "translateY(0)";
-              }}
-            >
-              서비스 소개
-            </button>
           </div>
         </div>
 
