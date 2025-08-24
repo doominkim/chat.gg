@@ -1,6 +1,8 @@
 // App.tsx
 import React from "react";
 import Layout from "./components/Layout";
+import Home from "./pages/Home";
+import About from "./pages/About";
 import Dashboard from "./pages/Dashboard";
 import ChannelSelect from "./pages/ChannelSelect";
 import UserDetail from "./pages/UserDetail";
@@ -22,8 +24,9 @@ const App: React.FC = () => {
     <Router>
       <Layout>
         <Routes>
-          {/* 메인 진입 시 채널 선택 페이지로 이동 */}
-          <Route path="/" element={<Navigate to="/channels" />} />
+          {/* 홈페이지 */}
+          <Route path="/" element={<Home />} />
+          <Route path="/about" element={<About />} />
           <Route path="/channels" element={<ChannelSelect />} />
           <Route path="/dashboard/:channelId" element={<Dashboard />} />
           <Route path="/user-select" element={<UserSelect />} />

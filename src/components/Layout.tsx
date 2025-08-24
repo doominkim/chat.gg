@@ -108,15 +108,34 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       <TopNavigation
         // SPA 네비게이션: 새로고침 방지
         identity={{
-          href: "/channels",
-          title: "　F_ Your Chzzk",
+          href: "/",
           logo: { src: "/logo.png" },
           onFollow: (e) => {
             e.preventDefault();
-            navigate("/channels");
+            navigate("/");
           },
         }}
-        utilities={[{ type: "button", text: "Archive", href: "/archive" }]}
+        utilities={[
+          {
+            type: "button",
+            text: "홈",
+            href: "/",
+            onClick: (e) => {
+              e.preventDefault();
+              navigate("/");
+            },
+          },
+          {
+            type: "button",
+            text: "서비스 소개",
+            href: "/about",
+            onClick: (e) => {
+              e.preventDefault();
+              navigate("/about");
+            },
+          },
+          { type: "button", text: "Archive", href: "/archive" },
+        ]}
         search={
           <FormField errorText={status || undefined}>
             <Autosuggest
