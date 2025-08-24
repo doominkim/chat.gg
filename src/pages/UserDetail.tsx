@@ -433,134 +433,115 @@ const UserDetail: React.FC = () => {
                 margin={{ left: "l" }}
               ></Box>
             </Header>
-            <Box margin={{ top: "m" }}>
-              <Button
-                variant="primary"
-                onClick={() => {
-                  if (userIdHash) {
-                    navigate(`/personality-analysis/${userIdHash}`);
-                  }
-                }}
-                disabled={!userIdHash}
-              >
-                🧠 채팅 내역 분석하기
-              </Button>
-            </Box>
           </Box>
           <Box>
-            <DateRangePicker
-              onChange={({ detail }) => {
-                if (!detail.value) return; // null이면 무시
-                setRange(detail.value);
-              }}
-              value={range}
-              dateOnly
-              expandToViewport
-              relativeOptions={[
-                {
-                  key: "last-7-days",
-                  type: "relative",
-                  amount: 7,
-                  unit: "day",
-                },
-                {
-                  key: "last-14-days",
-                  type: "relative",
-                  amount: 14,
-                  unit: "day",
-                },
-                {
-                  key: "last-30-days",
-                  type: "relative",
-                  amount: 30,
-                  unit: "day",
-                },
-                {
-                  key: "last-90-days",
-                  type: "relative",
-                  amount: 90,
-                  unit: "day",
-                },
-                {
-                  key: "last-12-months",
-                  type: "relative",
-                  amount: 12,
-                  unit: "month",
-                },
-              ]}
-              isValidRange={(r) => {
-                if (!r)
+            <SpaceBetween size="m" direction="horizontal">
+              <DateRangePicker
+                onChange={({ detail }) => {
+                  if (!detail.value) return; // null이면 무시
+                  setRange(detail.value);
+                }}
+                value={range}
+                dateOnly
+                expandToViewport
+                relativeOptions={[
+                  {
+                    key: "last-7-days",
+                    type: "relative",
+                    amount: 7,
+                    unit: "day",
+                  },
+                  {
+                    key: "last-14-days",
+                    type: "relative",
+                    amount: 14,
+                    unit: "day",
+                  },
+                  {
+                    key: "last-30-days",
+                    type: "relative",
+                    amount: 30,
+                    unit: "day",
+                  },
+                  {
+                    key: "last-90-days",
+                    type: "relative",
+                    amount: 90,
+                    unit: "day",
+                  },
+                  {
+                    key: "last-12-months",
+                    type: "relative",
+                    amount: 12,
+                    unit: "month",
+                  },
+                ]}
+                isValidRange={(r) => {
+                  if (!r)
+                    return {
+                      valid: false,
+                      errorMessage: "날짜 범위를 선택하세요.",
+                    };
+                  if (r.type === "absolute") {
+                    if (!r.startDate || !r.endDate) {
+                      return {
+                        valid: false,
+                        errorMessage: "시작·종료일을 모두 선택하세요.",
+                      };
+                    }
+                    if (new Date(r.startDate) > new Date(r.endDate)) {
+                      return {
+                        valid: false,
+                        errorMessage: "시작일이 종료일보다 이전이어야 합니다.",
+                      };
+                    }
+                    const today = new Date();
+                    if (
+                      new Date(r.startDate) > today ||
+                      new Date(r.endDate) > today
+                    ) {
+                      return {
+                        valid: false,
+                        errorMessage: "미래 날짜는 선택할 수 없습니다.",
+                      };
+                    }
+                    return { valid: true };
+                  }
+                  if (r.type === "relative") {
+                    const rel = r as { amount: number; unit: string };
+                    const ok =
+                      typeof rel.amount === "number" &&
+                      rel.amount > 0 &&
+                      !!rel.unit;
+                    return ok
+                      ? { valid: true }
+                      : {
+                          valid: false,
+                          errorMessage: "상대 범위를 올바르게 선택하세요.",
+                        };
+                  }
                   return {
                     valid: false,
-                    errorMessage: "날짜 범위를 선택하세요.",
+                    errorMessage: "유효하지 않은 범위 형식입니다.",
                   };
-                if (r.type === "absolute") {
-                  if (!r.startDate || !r.endDate) {
-                    return {
-                      valid: false,
-                      errorMessage: "시작·종료일을 모두 선택하세요.",
-                    };
-                  }
-                  if (new Date(r.startDate) > new Date(r.endDate)) {
-                    return {
-                      valid: false,
-                      errorMessage: "시작일이 종료일보다 이전이어야 합니다.",
-                    };
-                  }
-                  const today = new Date();
-                  if (
-                    new Date(r.startDate) > today ||
-                    new Date(r.endDate) > today
-                  ) {
-                    return {
-                      valid: false,
-                      errorMessage: "미래 날짜는 선택할 수 없습니다.",
-                    };
-                  }
-                  return { valid: true };
-                }
-                if (r.type === "relative") {
-                  const rel = r as { amount: number; unit: string };
-                  const ok =
-                    typeof rel.amount === "number" &&
-                    rel.amount > 0 &&
-                    !!rel.unit;
-                  return ok
-                    ? { valid: true }
-                    : {
-                        valid: false,
-                        errorMessage: "상대 범위를 올바르게 선택하세요.",
-                      };
-                }
-                return {
-                  valid: false,
-                  errorMessage: "유효하지 않은 범위 형식입니다.",
-                };
-              }}
-              isDateEnabled={(date) => {
-                const today = new Date();
-                today.setHours(0, 0, 0, 0);
-                return date <= today;
-              }}
-              i18nStrings={{
-                todayAriaLabel: "오늘 날짜",
-                nextMonthAriaLabel: "다음 달",
-                previousMonthAriaLabel: "이전 달",
-                customRelativeRangeOptionLabel: "사용자 지정 범위",
-                customRelativeRangeOptionDescription:
-                  "사용자 지정 날짜 범위 입력",
-                customRelativeRangeUnitLabel: "단위",
-                customRelativeRangeDurationLabel: "기간",
-                startDateLabel: "시작일",
-                endDateLabel: "종료일",
-                clearButtonLabel: "지우기",
-                cancelButtonLabel: "취소",
-                applyButtonLabel: "적용",
-                relativeModeTitle: "상대적 범위",
-                absoluteModeTitle: "절대적 범위",
-              }}
-              placeholder="날짜 범위를 선택하세요"
-            />
+                }}
+                i18nStrings={{
+                  todayAriaLabel: "오늘",
+                  nextMonthAriaLabel: "다음 달",
+                  previousMonthAriaLabel: "이전 달",
+                  customRelativeRangeDurationLabel: "기간",
+                  customRelativeRangeUnitLabel: "단위",
+                  startDateLabel: "시작일",
+                  endDateLabel: "종료일",
+                  clearButtonLabel: "지우기",
+                  cancelButtonLabel: "취소",
+                  applyButtonLabel: "적용",
+                  relativeModeTitle: "상대적 범위",
+                  absoluteModeTitle: "절대적 범위",
+                }}
+                placeholder="날짜 범위를 선택하세요"
+              />
+            </SpaceBetween>
           </Box>
         </SpaceBetween>
       </Box>
@@ -639,7 +620,7 @@ const UserDetail: React.FC = () => {
         {/* 오른쪽 6칸: 채팅 내역 */}
         <Container fitHeight header={<Header>채팅 내역</Header>}>
           <div style={{ minHeight: "800px", height: "100%" }}>
-            <ChatList params={chatFilterParams} />
+            <ChatList params={chatFilterParams} userIdHash={userIdHash} />
           </div>
         </Container>
       </Grid>

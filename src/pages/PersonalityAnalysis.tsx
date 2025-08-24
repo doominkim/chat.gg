@@ -7,7 +7,7 @@ import {
   Grid,
   Box,
   Badge,
-  ProgressBar,
+  Spinner,
   Alert,
   Button,
   StatusIndicator,
@@ -74,7 +74,7 @@ export default function PersonalityAnalysis() {
     return (
       <SpaceBetween size="l">
         <Container>
-          <Header variant="h1">🧠 AI 성격 분석</Header>
+          <Header variant="h1">AI 성격 분석</Header>
           <Box textAlign="center" padding="xl">
             <Box
               fontSize="heading-l"
@@ -83,11 +83,14 @@ export default function PersonalityAnalysis() {
             >
               AI가 사용자의 채팅 패턴을 분석하고 있습니다...
             </Box>
-            <ProgressBar
-              value={undefined}
-              description="분석 중 (약 2-3분 소요)"
-              status="in-progress"
-            />
+            <Spinner size="large" />
+            <Box
+              fontSize="body-m"
+              color="text-body-secondary"
+              margin={{ top: "m", bottom: "m" }}
+            >
+              분석 중 (약 2-3분 소요)
+            </Box>
             <Box
               fontSize="body-s"
               color="text-body-secondary"
@@ -107,7 +110,7 @@ export default function PersonalityAnalysis() {
     return (
       <SpaceBetween size="l">
         <Container>
-          <Header variant="h1">🧠 AI 성격 분석</Header>
+          <Header variant="h1">AI 성격 분석</Header>
           <Alert type="error" header="분석 실패">
             {error.message}
           </Alert>
@@ -125,7 +128,7 @@ export default function PersonalityAnalysis() {
     return (
       <SpaceBetween size="l">
         <Container>
-          <Header variant="h1">🧠 AI 성격 분석</Header>
+          <Header variant="h1">AI 성격 분석</Header>
           <Box textAlign="center" padding="xl">
             <Box fontSize="heading-l" margin={{ bottom: "l" }}>
               아직 분석이 시작되지 않았습니다
@@ -169,7 +172,7 @@ export default function PersonalityAnalysis() {
                 {data.personalityType}
               </Box>
               <Box
-                fontSize="heading-m"
+                fontSize="heading-xl"
                 color="text-body-secondary"
                 margin={{ bottom: "l" }}
               >
@@ -205,7 +208,7 @@ export default function PersonalityAnalysis() {
               <Box textAlign="center" padding="l">
                 <Box textAlign="center" margin={{ bottom: "l" }}>
                   <Box fontSize="heading-l" fontWeight="bold">
-                    📺 {data.sections.viewingBehavior.title}
+                    {data.sections.viewingBehavior.title}
                   </Box>
                   <Box margin={{ top: "s" }}>
                     <StatusIndicator
@@ -221,7 +224,7 @@ export default function PersonalityAnalysis() {
                   </Box>
                 </Box>
                 <Box
-                  fontSize="heading-m"
+                  fontSize="heading-xl"
                   fontWeight="bold"
                   margin={{ bottom: "xl" }}
                 >
@@ -243,7 +246,7 @@ export default function PersonalityAnalysis() {
                       {fmtNumber(data.sections.viewingBehavior.metrics.HHI)}
                     </Box>
                     <Box
-                      fontSize="heading-m"
+                      fontSize="heading-xl"
                       fontWeight="bold"
                       color="text-body-secondary"
                     >
@@ -259,7 +262,7 @@ export default function PersonalityAnalysis() {
                       {data.sections.viewingBehavior.metrics.topChannel}
                     </Box>
                     <Box
-                      fontSize="heading-m"
+                      fontSize="heading-xl"
                       fontWeight="bold"
                       color="text-body-secondary"
                     >
@@ -275,7 +278,7 @@ export default function PersonalityAnalysis() {
                       {data.sections.viewingBehavior.metrics.topSharePct}%
                     </Box>
                     <Box
-                      fontSize="heading-m"
+                      fontSize="heading-xl"
                       fontWeight="bold"
                       color="text-body-secondary"
                     >
@@ -289,7 +292,7 @@ export default function PersonalityAnalysis() {
               <Box textAlign="center" padding="l">
                 <Box textAlign="center" margin={{ bottom: "l" }}>
                   <Box fontSize="heading-l" fontWeight="bold">
-                    🥇 {data.sections.loyaltyDiversity.title}
+                    {data.sections.loyaltyDiversity.title}
                   </Box>
                   <Box margin={{ top: "s" }}>
                     <StatusIndicator
@@ -305,7 +308,7 @@ export default function PersonalityAnalysis() {
                   </Box>
                 </Box>
                 <Box
-                  fontSize="heading-m"
+                  fontSize="heading-xl"
                   fontWeight="bold"
                   margin={{ bottom: "xl" }}
                 >
@@ -321,7 +324,7 @@ export default function PersonalityAnalysis() {
                       {data.sections.loyaltyDiversity.metrics.loyaltyLabel}
                     </Box>
                     <Box
-                      fontSize="heading-m"
+                      fontSize="heading-xl"
                       fontWeight="bold"
                       color="text-body-secondary"
                     >
@@ -337,7 +340,7 @@ export default function PersonalityAnalysis() {
                       {data.sections.loyaltyDiversity.metrics.channelCount}개
                     </Box>
                     <Box
-                      fontSize="heading-m"
+                      fontSize="heading-xl"
                       fontWeight="bold"
                       color="text-body-secondary"
                     >
@@ -351,7 +354,7 @@ export default function PersonalityAnalysis() {
               <Box textAlign="center" padding="l">
                 <Box textAlign="center" margin={{ bottom: "l" }}>
                   <Box fontSize="heading-l" fontWeight="bold">
-                    🌙 {data.sections.activityPattern.title}
+                    {data.sections.activityPattern.title}
                   </Box>
                   <Box margin={{ top: "s" }}>
                     <StatusIndicator
@@ -367,7 +370,7 @@ export default function PersonalityAnalysis() {
                   </Box>
                 </Box>
                 <Box
-                  fontSize="heading-m"
+                  fontSize="heading-xl"
                   fontWeight="bold"
                   margin={{ bottom: "xl" }}
                 >
@@ -385,7 +388,7 @@ export default function PersonalityAnalysis() {
                       )}
                     </Box>
                     <Box
-                      fontSize="heading-m"
+                      fontSize="heading-xl"
                       fontWeight="bold"
                       color="text-body-secondary"
                     >
@@ -401,7 +404,7 @@ export default function PersonalityAnalysis() {
                       {data.sections.activityPattern.metrics.peakHourKST}시
                     </Box>
                     <Box
-                      fontSize="heading-m"
+                      fontSize="heading-xl"
                       fontWeight="bold"
                       color="text-body-secondary"
                     >
@@ -415,7 +418,7 @@ export default function PersonalityAnalysis() {
               <Box textAlign="center" padding="l">
                 <Box textAlign="center" margin={{ bottom: "l" }}>
                   <Box fontSize="heading-l" fontWeight="bold">
-                    💰 {data.sections.donationPotential.title}
+                    {data.sections.donationPotential.title}
                   </Box>
                   <Box margin={{ top: "s" }}>
                     <StatusIndicator
@@ -431,7 +434,7 @@ export default function PersonalityAnalysis() {
                   </Box>
                 </Box>
                 <Box
-                  fontSize="heading-m"
+                  fontSize="heading-xl"
                   fontWeight="bold"
                   margin={{ bottom: "xl" }}
                 >
@@ -446,7 +449,7 @@ export default function PersonalityAnalysis() {
                     {data.sections.donationPotential.score}/100
                   </Box>
                   <Box
-                    fontSize="heading-m"
+                    fontSize="heading-xl"
                     fontWeight="bold"
                     color="text-body-secondary"
                   >
@@ -454,29 +457,7 @@ export default function PersonalityAnalysis() {
                   </Box>
                 </Box>
                 {data.sections.donationPotential.actions.length > 0 && (
-                  <Box>
-                    <Box
-                      fontSize="heading-m"
-                      fontWeight="bold"
-                      color="text-body-secondary"
-                      margin={{ bottom: "xs" }}
-                    >
-                      추천 액션
-                    </Box>
-                    <SpaceBetween size="xs">
-                      {data.sections.donationPotential.actions.map(
-                        (action, index) => (
-                          <Box
-                            key={index}
-                            fontSize="heading-m"
-                            fontWeight="bold"
-                          >
-                            • {action}
-                          </Box>
-                        )
-                      )}
-                    </SpaceBetween>
-                  </Box>
+                  <Box></Box>
                 )}
               </Box>
 
@@ -484,7 +465,7 @@ export default function PersonalityAnalysis() {
               <Box textAlign="center" padding="l">
                 <Box textAlign="center" margin={{ bottom: "l" }}>
                   <Box fontSize="heading-l" fontWeight="bold">
-                    💬 {data.sections.chatStyle.title}
+                    {data.sections.chatStyle.title}
                   </Box>
                   <Box margin={{ top: "s" }}>
                     <StatusIndicator
@@ -498,7 +479,7 @@ export default function PersonalityAnalysis() {
                   </Box>
                 </Box>
                 <Box
-                  fontSize="heading-m"
+                  fontSize="heading-xl"
                   fontWeight="bold"
                   margin={{ bottom: "xl" }}
                 >
@@ -520,7 +501,7 @@ export default function PersonalityAnalysis() {
                       {data.sections.chatStyle.metrics.exclamationRatio}%
                     </Box>
                     <Box
-                      fontSize="heading-m"
+                      fontSize="heading-xl"
                       fontWeight="bold"
                       color="text-body-secondary"
                     >
@@ -536,7 +517,7 @@ export default function PersonalityAnalysis() {
                       {data.sections.chatStyle.metrics.questionRatio}%
                     </Box>
                     <Box
-                      fontSize="heading-m"
+                      fontSize="heading-xl"
                       fontWeight="bold"
                       color="text-body-secondary"
                     >
@@ -552,7 +533,7 @@ export default function PersonalityAnalysis() {
                       {data.sections.chatStyle.metrics.independentTurnRatio}%
                     </Box>
                     <Box
-                      fontSize="heading-m"
+                      fontSize="heading-xl"
                       fontWeight="bold"
                       color="text-body-secondary"
                     >
@@ -566,7 +547,7 @@ export default function PersonalityAnalysis() {
               <Box textAlign="center" padding="l">
                 <Box textAlign="center" margin={{ bottom: "l" }}>
                   <Box fontSize="heading-l" fontWeight="bold">
-                    😊 {data.sections.emotionalTone.title}
+                    {data.sections.emotionalTone.title}
                   </Box>
                   <Box margin={{ top: "s" }}>
                     <StatusIndicator
@@ -582,7 +563,7 @@ export default function PersonalityAnalysis() {
                   </Box>
                 </Box>
                 <Box
-                  fontSize="heading-m"
+                  fontSize="heading-xl"
                   fontWeight="bold"
                   margin={{ bottom: "xl" }}
                 >
@@ -598,7 +579,7 @@ export default function PersonalityAnalysis() {
                       {data.sections.emotionalTone.metrics.positiveCuePct}%
                     </Box>
                     <Box
-                      fontSize="heading-m"
+                      fontSize="heading-xl"
                       fontWeight="bold"
                       color="text-body-secondary"
                     >
@@ -614,7 +595,7 @@ export default function PersonalityAnalysis() {
                       {data.sections.emotionalTone.metrics.negativeCuePct}%
                     </Box>
                     <Box
-                      fontSize="heading-m"
+                      fontSize="heading-xl"
                       fontWeight="bold"
                       color="text-body-secondary"
                     >
@@ -628,7 +609,7 @@ export default function PersonalityAnalysis() {
               <Box textAlign="center" padding="l">
                 <Box textAlign="center" margin={{ bottom: "l" }}>
                   <Box fontSize="heading-l" fontWeight="bold">
-                    👥 {data.sections.demographics.title}
+                    {data.sections.demographics.title}
                   </Box>
                   <Box margin={{ top: "s" }}>
                     <StatusIndicator
@@ -644,7 +625,7 @@ export default function PersonalityAnalysis() {
                   </Box>
                 </Box>
                 <Box
-                  fontSize="heading-m"
+                  fontSize="heading-xl"
                   fontWeight="bold"
                   margin={{ bottom: "xl" }}
                 >

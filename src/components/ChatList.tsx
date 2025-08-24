@@ -5,9 +5,10 @@ import { useNavigate } from "react-router-dom";
 
 interface ChatListProps {
   params?: FindChatParams;
+  userIdHash?: string;
 }
 
-export function ChatList({ params = {} }: ChatListProps) {
+export function ChatList({ params = {}, userIdHash }: ChatListProps) {
   const { data: chats, loading, error, refetch } = useChat(params);
   const [newMessageCount, setNewMessageCount] = useState(0);
   const [isScrolledToBottom, setIsScrolledToBottom] = useState(true);
@@ -119,11 +120,6 @@ export function ChatList({ params = {} }: ChatListProps) {
   // 새 메시지 알림 클릭 시 스크롤
   const handleNewMessageClick = () => {
     scrollToBottom();
-  };
-
-  // AI 분석 페이지로 이동
-  const handleAnalysisClick = () => {
-    navigate("/chat-analysis", { state: { chatParams: params } });
   };
 
   // 채팅 내역을 텍스트 파일로 추출
@@ -634,7 +630,12 @@ export function ChatList({ params = {} }: ChatListProps) {
         </button>
 
         <button
-          onClick={handleAnalysisClick}
+          onClick={() => {
+            if (userIdHash) {
+              navigate(`/personality-analysis/${userIdHash}`);
+            }
+          }}
+          disabled={!userIdHash}
           style={{
             background: "linear-gradient(135deg, #007bff, #0056b3)",
             color: "white",
@@ -649,11 +650,14 @@ export function ChatList({ params = {} }: ChatListProps) {
             gap: "8px",
             boxShadow: "0 4px 12px rgba(0, 123, 255, 0.3)",
             transition: "all 0.3s ease",
+            opacity: userIdHash ? 1 : 0.6,
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.transform = "translateY(-2px)";
-            e.currentTarget.style.boxShadow =
-              "0 6px 20px rgba(0, 123, 255, 0.4)";
+            if (userIdHash) {
+              e.currentTarget.style.transform = "translateY(-2px)";
+              e.currentTarget.style.boxShadow =
+                "0 6px 20px rgba(0, 123, 255, 0.4)";
+            }
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.transform = "translateY(0)";
@@ -661,8 +665,7 @@ export function ChatList({ params = {} }: ChatListProps) {
               "0 4px 12px rgba(0, 123, 255, 0.3)";
           }}
         >
-          <span style={{ fontSize: "16px" }}>🤖</span>
-          채팅 내역 분석하기 (AI)
+          채팅 내역 분석하기(AI)
         </button>
       </div>
     </div>
