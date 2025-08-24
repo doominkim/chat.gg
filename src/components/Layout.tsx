@@ -1,6 +1,6 @@
 // components/Layout.tsx
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import {
   AppLayout,
   TopNavigation,
@@ -17,11 +17,28 @@ interface LayoutProps {
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchValue, setSearchValue] = useState("");
   const [status, setStatus] = useState<string | null>(null);
 
   const [loading, setLoading] = useState(false);
   const [options, setOptions] = useState<{ value: string }[]>([]);
+
+  // 홈페이지인지 확인
+  const isHomePage = location.pathname === "/";
+
+  // 홈 페이지일 때 body에 클래스 추가/제거
+  useEffect(() => {
+    if (isHomePage) {
+      document.body.classList.add('home-page');
+    } else {
+      document.body.classList.remove('home-page');
+    }
+    
+    return () => {
+      document.body.classList.remove('home-page');
+    };
+  }, [isHomePage]);
 
   // 닉네임 규칙(예시): 한글/영문/숫자/언더바/하이픈/점/공백, 2~30자
   const isValidNickname = (s: string) =>
@@ -104,7 +121,17 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   };
 
   return (
-    <>
+    <div
+      style={{
+        minHeight: "100vh",
+        background: isHomePage
+          ? "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
+          : undefined,
+        fontFamily: isHomePage
+          ? "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+          : undefined,
+      }}
+    >
       <TopNavigation
         // SPA 네비게이션: 새로고침 방지
         identity={{
@@ -143,13 +170,27 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         }
       />
 
-      <AppLayout content={children} navigationHide={true} toolsHide={true} />
+      <div
+        style={{
+          background: isHomePage
+            ? "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
+            : undefined,
+          minHeight: isHomePage ? "calc(100vh - 60px)" : undefined,
+        }}
+      >
+        <AppLayout 
+          content={children} 
+          navigationHide={true} 
+          toolsHide={true}
+          data-testid="app-layout"
+        />
+      </div>
 
       {/* 광고 배너 - 항상 최하단에 고정 */}
       <AdBanner
         showPlaceholder={true} // 플레이스홀더 표시 (실제 AdSense 정보가 없을 때)
       />
-    </>
+    </div>
   );
 };
 
