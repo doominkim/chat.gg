@@ -32,11 +32,7 @@ export default function ChannelSelect() {
   return (
     <div
       style={{
-        minHeight: "100vh",
-        background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
         padding: "40px 20px",
-        fontFamily:
-          "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
       }}
     >
       <div style={{ maxWidth: "1200px", margin: "0 auto" }}>
@@ -44,25 +40,15 @@ export default function ChannelSelect() {
         <div
           style={{
             textAlign: "center",
-            padding: "60px 0",
+            padding: "20px 0",
             color: "white",
           }}
         >
-          <h1
-            style={{
-              fontSize: "48px",
-              fontWeight: "700",
-              margin: "0 0 20px 0",
-              letterSpacing: "-1px",
-            }}
-          >
-            📺 채널 선택
-          </h1>
           <p
             style={{
-              fontSize: "20px",
+              fontSize: "30px",
               fontWeight: "400",
-              margin: "0 0 40px 0",
+              margin: "0 0 10px 0",
               maxWidth: "600px",
               marginLeft: "auto",
               marginRight: "auto",
@@ -71,6 +57,21 @@ export default function ChannelSelect() {
             }}
           >
             분석하고 싶은 채널을 선택하세요
+          </p>
+          <p
+            style={{
+              fontSize: "14px",
+              fontWeight: "400",
+              margin: "0 0 40px 0",
+              maxWidth: "600px",
+              marginLeft: "auto",
+              marginRight: "auto",
+              lineHeight: 1.5,
+              opacity: 0.7,
+              color: "#bdc3c7",
+            }}
+          >
+            내 채널이 보이지 않는다면 고객센터에 문의해주세요
           </p>
         </div>
 

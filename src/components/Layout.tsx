@@ -24,21 +24,22 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const [loading, setLoading] = useState(false);
   const [options, setOptions] = useState<{ value: string }[]>([]);
 
-  // 홈페이지인지 확인
-  const isHomePage = location.pathname === "/";
+  // 홈페이지 또는 channels 페이지인지 확인
+  const isGradientPage =
+    location.pathname === "/" || location.pathname === "/channels";
 
-  // 홈 페이지일 때 body에 클래스 추가/제거
+  // 그라데이션 페이지일 때 body에 클래스 추가/제거
   useEffect(() => {
-    if (isHomePage) {
-      document.body.classList.add('home-page');
+    if (isGradientPage) {
+      document.body.classList.add("gradient-page");
     } else {
-      document.body.classList.remove('home-page');
+      document.body.classList.remove("gradient-page");
     }
-    
+
     return () => {
-      document.body.classList.remove('home-page');
+      document.body.classList.remove("gradient-page");
     };
-  }, [isHomePage]);
+  }, [isGradientPage]);
 
   // 닉네임 규칙(예시): 한글/영문/숫자/언더바/하이픈/점/공백, 2~30자
   const isValidNickname = (s: string) =>
@@ -124,10 +125,10 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     <div
       style={{
         minHeight: "100vh",
-        background: isHomePage
+        background: isGradientPage
           ? "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
           : undefined,
-        fontFamily: isHomePage
+        fontFamily: isGradientPage
           ? "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
           : undefined,
       }}
@@ -172,15 +173,15 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 
       <div
         style={{
-          background: isHomePage
+          background: isGradientPage
             ? "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
             : undefined,
-          minHeight: isHomePage ? "calc(100vh - 60px)" : undefined,
+          minHeight: isGradientPage ? "calc(100vh - 60px)" : undefined,
         }}
       >
-        <AppLayout 
-          content={children} 
-          navigationHide={true} 
+        <AppLayout
+          content={children}
+          navigationHide={true}
           toolsHide={true}
           data-testid="app-layout"
         />
