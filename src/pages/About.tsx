@@ -108,7 +108,7 @@ export default function About() {
               margin: "0 0 20px 0",
             }}
           >
-            FYC Analytics 소개
+            chat.gg 소개
           </h1>
           <p
             style={{
@@ -145,7 +145,7 @@ export default function About() {
                 margin: "0 auto",
               }}
             >
-              FYC Analytics만의 독특한 기능들을 소개합니다
+              chat.gg만의 독특한 기능들을 소개합니다
             </p>
           </div>
 
@@ -238,7 +238,7 @@ export default function About() {
                 margin: "0 auto",
               }}
             >
-              FYC Analytics를 통해 얻을 수 있는 다양한 혜택들
+              chat.gg를 통해 얻을 수 있는 다양한 혜택들
             </p>
           </div>
 
@@ -441,7 +441,7 @@ export default function About() {
               opacity: 0.9,
             }}
           >
-            FYC Analytics와 함께 시청자들을 더 깊이 이해하세요
+            chat.gg와 함께 시청자들을 더 깊이 이해하세요
           </p>
           <SpaceBetween size="l" direction="horizontal">
             <Button

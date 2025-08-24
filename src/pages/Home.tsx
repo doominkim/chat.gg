@@ -62,7 +62,7 @@ export default function Home() {
               letterSpacing: "-1px",
             }}
           >
-            FYC Analytics
+            chat.gg
           </h1>
           <p
             style={{
@@ -142,7 +142,7 @@ export default function Home() {
                 margin: "0 auto",
               }}
             >
-              FYC Analytics가 제공하는 강력한 분석 도구들을 만나보세요
+              chat.gg가 제공하는 강력한 분석 도구들을 만나보세요
             </p>
           </div>
 

@@ -1,21 +1,8 @@
 import React, { useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  Container,
-  Header,
-  SpaceBetween,
-  Grid,
-  Box,
-  Badge,
-  StatusIndicator,
-  Cards,
-} from "@cloudscape-design/components";
 import { useApi } from "../api/hooks";
 import { channelService } from "../api/services";
-import type {
-  Channel,
-  ChannelListResponse,
-} from "../api/services/channelService";
+import type { Channel } from "../api/services/channelService";
 
 const fmtNumber = (n: number) => n.toLocaleString("ko-KR");
 
@@ -42,136 +29,256 @@ export default function ChannelSelect() {
     return 0;
   });
 
-  // 라이브 중인 채널과 라이브가 아닌 채널 분리
-  const liveChannels = channels.filter(
-    (channel: Channel) => channel.openLive === true
-  );
-  const nonLiveChannels = channels.filter(
-    (channel: Channel) => channel.openLive === false
-  );
-
   return (
-    <SpaceBetween size="l">
-      <Box variant="h1">📺 채널 선택</Box>
+    <div
+      style={{
+        minHeight: "100vh",
+        background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+        padding: "40px 20px",
+        fontFamily:
+          "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+      }}
+    >
+      <div style={{ maxWidth: "1200px", margin: "0 auto" }}>
+        {/* Header Section */}
+        <div
+          style={{
+            textAlign: "center",
+            padding: "60px 0",
+            color: "white",
+          }}
+        >
+          <h1
+            style={{
+              fontSize: "48px",
+              fontWeight: "700",
+              margin: "0 0 20px 0",
+              letterSpacing: "-1px",
+            }}
+          >
+            📺 채널 선택
+          </h1>
+          <p
+            style={{
+              fontSize: "20px",
+              fontWeight: "400",
+              margin: "0 0 40px 0",
+              maxWidth: "600px",
+              marginLeft: "auto",
+              marginRight: "auto",
+              lineHeight: 1.5,
+              opacity: 0.9,
+            }}
+          >
+            분석하고 싶은 채널을 선택하세요
+          </p>
+        </div>
 
-      {loading ? (
-        <Box textAlign="center" padding="xl">
-          로딩 중...
-        </Box>
-      ) : error ? (
-        <Box textAlign="center" padding="xl" color="text-status-error">
-          오류: {error.message}
-        </Box>
-      ) : (
-        <Container>
-          {channels.length === 0 ? (
-            <Box textAlign="center" padding="xl" color="text-body-secondary">
-              채널이 없습니다.
-            </Box>
-          ) : (
-            <Cards
-              cardDefinition={{
-                header: (item: Channel) => (
-                  <Header
-                    variant="h3"
-                    actions={
-                      <StatusIndicator
-                        type={
-                          item.openLive
-                            ? item.channelLive.status
-                              ? "success"
-                              : "pending"
-                            : "stopped"
-                        }
-                      >
-                        {item.openLive
-                          ? item.channelLive.status
-                            ? "LIVE"
-                            : "대기"
-                          : "OFFLINE"}
-                      </StatusIndicator>
-                    }
-                  >
-                    {item.channelName}
-                  </Header>
-                ),
-                sections: [
-                  {
-                    id: "image",
-                    header: "",
-                    content: (item: Channel) => (
-                      <div
-                        onClick={() => handleChannelClick(item.id)}
-                        style={{ cursor: "pointer" }}
-                      >
-                        <Box textAlign="center">
-                          <img
-                            src={item.channelImageUrl}
-                            alt={item.channelName}
-                            style={{
-                              width: "80px",
-                              height: "80px",
-                              borderRadius: "50%",
-                              objectFit: "cover",
-                              opacity: item.openLive ? 1 : 0.6,
-                            }}
-                          />
-                        </Box>
-                      </div>
-                    ),
-                  },
-                  {
-                    id: "info",
-                    header: "",
-                    content: (item: Channel) => (
-                      <SpaceBetween size="s">
-                        <Box>
-                          <Box
-                            fontWeight="bold"
-                            fontSize="heading-s"
-                            color={
-                              item.openLive ? undefined : "text-body-secondary"
-                            }
-                          >
-                            {item.channelLive?.liveTitle ||
-                              "방송 중이 아닙니다"}
-                          </Box>
-                          <Box color="text-body-secondary" fontSize="body-s">
-                            {item.channelLive?.liveCategory
-                              ?.liveCategoryValue || "카테고리 없음"}
-                          </Box>
-                        </Box>
-
-                        <Box textAlign="center">
-                          <Badge color={item.openLive ? "blue" : "grey"}>
-                            {fmtNumber(item.follower)} 팔로워
-                          </Badge>
-                        </Box>
-                      </SpaceBetween>
-                    ),
-                  },
-                ],
+        {/* Content Section */}
+        <div
+          style={{
+            background: "white",
+            borderRadius: "24px",
+            padding: "40px",
+            boxShadow: "0 20px 40px rgba(0,0,0,0.1)",
+          }}
+        >
+          {loading ? (
+            <div
+              style={{
+                textAlign: "center",
+                padding: "60px 20px",
+                fontSize: "18px",
+                color: "#7f8c8d",
               }}
-              cardsPerRow={[
-                { cards: 1 },
-                { minWidth: 500, cards: 2 },
-                { minWidth: 800, cards: 3 },
-              ]}
-              items={channels}
-              loadingText="로딩 중..."
-              empty={
-                <Box
-                  textAlign="center"
-                  padding="xl"
-                  color="text-body-secondary"
+            >
+              로딩 중...
+            </div>
+          ) : error ? (
+            <div
+              style={{
+                textAlign: "center",
+                padding: "60px 20px",
+                fontSize: "18px",
+                color: "#e74c3c",
+              }}
+            >
+              오류: {error.message}
+            </div>
+          ) : channels.length === 0 ? (
+            <div
+              style={{
+                textAlign: "center",
+                padding: "60px 20px",
+                fontSize: "18px",
+                color: "#7f8c8d",
+              }}
+            >
+              채널이 없습니다.
+            </div>
+          ) : (
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+                gap: "20px",
+                maxWidth: "100%",
+              }}
+            >
+              {channels.map((channel) => (
+                <div
+                  key={channel.id}
+                  onClick={() => handleChannelClick(channel.id)}
+                  style={{
+                    background: channel.openLive ? "#f8f9fa" : "#f1f2f6",
+                    borderRadius: "16px",
+                    padding: "24px",
+                    cursor: "pointer",
+                    transition: "all 0.3s ease",
+                    border: channel.openLive
+                      ? "2px solid #667eea"
+                      : "2px solid transparent",
+                    opacity: channel.openLive ? 1 : 0.7,
+                    height: "320px",
+                    display: "flex",
+                    flexDirection: "column",
+                    justifyContent: "space-between",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = "translateY(-8px)";
+                    e.currentTarget.style.boxShadow =
+                      "0 20px 40px rgba(0,0,0,0.1)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = "translateY(0)";
+                    e.currentTarget.style.boxShadow = "none";
+                  }}
                 >
-                  채널이 없습니다.
-                </Box>
-              }
-            />
+                  {/* Channel Image and Status */}
+                  <div style={{ textAlign: "center", marginBottom: "20px" }}>
+                    <div
+                      style={{ position: "relative", display: "inline-block" }}
+                    >
+                      <img
+                        src={channel.channelImageUrl}
+                        alt={channel.channelName}
+                        style={{
+                          width: "80px",
+                          height: "80px",
+                          borderRadius: "50%",
+                          objectFit: "cover",
+                          border: "3px solid white",
+                          boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+                        }}
+                      />
+                      <div
+                        style={{
+                          position: "absolute",
+                          top: "-5px",
+                          right: "-5px",
+                          background: channel.openLive ? "#27ae60" : "#95a5a6",
+                          color: "white",
+                          padding: "4px 8px",
+                          borderRadius: "12px",
+                          fontSize: "12px",
+                          fontWeight: "600",
+                          border: "2px solid white",
+                        }}
+                      >
+                        {channel.openLive ? "LIVE" : "OFFLINE"}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Channel Name */}
+                  <h3
+                    style={{
+                      fontSize: "20px",
+                      fontWeight: "700",
+                      margin: "0 0 10px 0",
+                      color: "#2c3e50",
+                      textAlign: "center",
+                    }}
+                  >
+                    {channel.channelName}
+                  </h3>
+
+                  {/* Live Title */}
+                  <p
+                    style={{
+                      fontSize: "14px",
+                      color: "#7f8c8d",
+                      margin: "0 0 15px 0",
+                      textAlign: "center",
+                      lineHeight: 1.4,
+                      height: "40px",
+                      overflow: "hidden",
+                      display: "-webkit-box",
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: "vertical",
+                    }}
+                  >
+                    {channel.channelLive?.liveTitle || "방송 중이 아닙니다"}
+                  </p>
+
+                  {/* Category */}
+                  <div
+                    style={{
+                      textAlign: "center",
+                      marginBottom: "15px",
+                    }}
+                  >
+                    <span
+                      style={{
+                        background: "#667eea",
+                        color: "white",
+                        padding: "6px 12px",
+                        borderRadius: "20px",
+                        fontSize: "12px",
+                        fontWeight: "600",
+                      }}
+                    >
+                      {channel.channelLive?.liveCategory?.liveCategoryValue ||
+                        "카테고리 없음"}
+                    </span>
+                  </div>
+
+                  {/* Follower Count */}
+                  <div
+                    style={{
+                      textAlign: "center",
+                      padding: "12px",
+                      background: "white",
+                      borderRadius: "12px",
+                      border: "1px solid #e1e8ed",
+                      marginTop: "auto",
+                    }}
+                  >
+                    <div
+                      style={{
+                        fontSize: "16px",
+                        fontWeight: "700",
+                        color: "#2c3e50",
+                      }}
+                    >
+                      {fmtNumber(channel.follower)}
+                    </div>
+                    <div
+                      style={{
+                        fontSize: "12px",
+                        color: "#7f8c8d",
+                        marginTop: "2px",
+                      }}
+                    >
+                      팔로워
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
           )}
-        </Container>
-      )}
-    </SpaceBetween>
+        </div>
+      </div>
+    </div>
   );
 }
