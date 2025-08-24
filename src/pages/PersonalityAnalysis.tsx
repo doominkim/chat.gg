@@ -4,13 +4,10 @@ import {
   Container,
   Header,
   SpaceBetween,
-  Grid,
   Box,
-  Badge,
   Spinner,
   Alert,
   Button,
-  StatusIndicator,
 } from "@cloudscape-design/components";
 import { useApi } from "../api/hooks";
 import { userDetailService } from "../api/services";
@@ -114,7 +111,7 @@ export default function PersonalityAnalysis() {
           <Alert type="error" header="분석 실패">
             {error.message}
           </Alert>
-          <Box textAlign="center" margin={{ top: "l" }}>
+          <Box textAlign="center" padding="xl">
             <Button onClick={handleStartAnalysis} loading={isAnalyzing}>
               다시 분석하기
             </Button>
@@ -131,16 +128,14 @@ export default function PersonalityAnalysis() {
           <Header variant="h1">AI 성격 분석</Header>
           <Box textAlign="center" padding="xl">
             <Box fontSize="heading-l" margin={{ bottom: "l" }}>
-              아직 분석이 시작되지 않았습니다
+              AI 성격 분석을 시작해보세요
             </Box>
             <Box
               fontSize="body-m"
               color="text-body-secondary"
-              margin={{ bottom: "l" }}
+              margin={{ bottom: "xl" }}
             >
-              AI가 사용자의 채팅 패턴을 분석하여 성격을 파악합니다.
-              <br />
-              분석에는 약 2-3분이 소요됩니다.
+              사용자의 채팅 패턴을 분석하여 고유한 성격을 파악합니다.
             </Box>
             <Button onClick={handleStartAnalysis} loading={isAnalyzing}>
               분석 시작하기
@@ -154,493 +149,963 @@ export default function PersonalityAnalysis() {
   const { data } = analysisData;
 
   return (
-    <SpaceBetween size="xl">
-      <Box>
-        {/* 성격 요약 - 메인 섹션 */}
-        <Grid gridDefinition={[{ colspan: 2 }, { colspan: 8 }, { colspan: 2 }]}>
-          <Box></Box>
-          <Box>
-            <Box textAlign="center" padding="xxl" margin={{ bottom: "xl" }}>
-              <Box fontSize="display-l" margin={{ bottom: "m" }}>
-                {data.personalityEmoji}
-              </Box>
-              <Box
-                fontSize="heading-xl"
-                fontWeight="bold"
-                margin={{ bottom: "s" }}
+    <div
+      style={{
+        maxWidth: "1200px",
+        margin: "0 auto",
+        padding: "40px 20px",
+        fontFamily:
+          "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+        lineHeight: 1.6,
+        color: "#333",
+      }}
+    >
+      {/* 성격 요약 - 메인 섹션 */}
+      <div
+        style={{
+          textAlign: "center",
+          marginBottom: "60px",
+          padding: "60px 40px",
+          background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+          borderRadius: "20px",
+          color: "white",
+          boxShadow: "0 20px 40px rgba(0,0,0,0.1)",
+        }}
+      >
+        <div style={{ fontSize: "80px", marginBottom: "20px" }}>
+          {data.personalityEmoji}
+        </div>
+        <h1
+          style={{
+            fontSize: "48px",
+            fontWeight: "700",
+            margin: "0 0 10px 0",
+            letterSpacing: "-0.5px",
+          }}
+        >
+          {data.personalityType}
+        </h1>
+        <h2
+          style={{
+            fontSize: "24px",
+            fontWeight: "400",
+            margin: "0 0 30px 0",
+            opacity: 0.9,
+          }}
+        >
+          {data.personalityCode}
+        </h2>
+        <p
+          style={{
+            fontSize: "28px",
+            fontWeight: "500",
+            margin: "0 0 30px 0",
+            maxWidth: "800px",
+            marginLeft: "auto",
+            marginRight: "auto",
+            lineHeight: 1.4,
+          }}
+        >
+          {data.summaryOneLine}
+        </p>
+        {data.personalityAka.length > 0 && (
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              gap: "10px",
+              flexWrap: "wrap",
+            }}
+          >
+            {data.personalityAka.map((aka, index) => (
+              <span
+                key={index}
+                style={{
+                  background: "rgba(255,255,255,0.2)",
+                  padding: "8px 16px",
+                  borderRadius: "20px",
+                  fontSize: "14px",
+                  fontWeight: "500",
+                }}
               >
-                {data.personalityType}
-              </Box>
-              <Box
-                fontSize="heading-xl"
-                color="text-body-secondary"
-                margin={{ bottom: "l" }}
+                {aka}
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* 상세 분석 섹션들 */}
+      <div style={{ maxWidth: "900px", margin: "0 auto" }}>
+        <SpaceBetween size="xxl">
+          {/* 시청 행태 분석 */}
+          <div
+            style={{
+              background: "white",
+              borderRadius: "16px",
+              padding: "40px",
+              boxShadow: "0 4px 20px rgba(0,0,0,0.08)",
+              border: "1px solid #f0f0f0",
+            }}
+          >
+            <div style={{ textAlign: "center", marginBottom: "30px" }}>
+              <h3
+                style={{
+                  fontSize: "32px",
+                  fontWeight: "700",
+                  margin: "0 0 15px 0",
+                  color: "#2c3e50",
+                }}
               >
-                {data.personalityCode}
-              </Box>
-              <Box
-                fontSize="heading-xl"
-                color="text-body-secondary"
-                margin={{ bottom: "l" }}
+                {data.sections.viewingBehavior.title}
+              </h3>
+              <div
+                style={{
+                  display: "inline-block",
+                  padding: "6px 16px",
+                  borderRadius: "20px",
+                  fontSize: "14px",
+                  fontWeight: "600",
+                  background:
+                    getConfidenceColor(
+                      data.sections.viewingBehavior.confidence
+                    ) === "success"
+                      ? "#e8f5e8"
+                      : getConfidenceColor(
+                          data.sections.viewingBehavior.confidence
+                        ) === "info"
+                      ? "#e3f2fd"
+                      : getConfidenceColor(
+                          data.sections.viewingBehavior.confidence
+                        ) === "pending"
+                      ? "#fff3e0"
+                      : "#ffebee",
+                  color:
+                    getConfidenceColor(
+                      data.sections.viewingBehavior.confidence
+                    ) === "success"
+                      ? "#2e7d32"
+                      : getConfidenceColor(
+                          data.sections.viewingBehavior.confidence
+                        ) === "info"
+                      ? "#1976d2"
+                      : getConfidenceColor(
+                          data.sections.viewingBehavior.confidence
+                        ) === "pending"
+                      ? "#f57c00"
+                      : "#d32f2f",
+                }}
               >
-                {data.summaryOneLine}
-              </Box>
-              {data.personalityAka.length > 0 && (
-                <SpaceBetween size="xs" direction="horizontal">
-                  {data.personalityAka.map((aka, index) => (
-                    <Badge key={index} color="blue">
-                      {/* {aka} */}
-                    </Badge>
-                  ))}
-                </SpaceBetween>
-              )}
-            </Box>
-          </Box>
-          <Box></Box>
-        </Grid>
+                신뢰도:{" "}
+                {getConfidenceLabel(data.sections.viewingBehavior.confidence)}
+              </div>
+            </div>
+            <p
+              style={{
+                fontSize: "20px",
+                fontWeight: "500",
+                margin: "0 0 40px 0",
+                lineHeight: 1.6,
+                color: "#34495e",
+              }}
+            >
+              {data.sections.viewingBehavior.content}
+            </p>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(3, 1fr)",
+                gap: "30px",
+                marginTop: "40px",
+              }}
+            >
+              <div style={{ textAlign: "center" }}>
+                <div
+                  style={{
+                    fontSize: "36px",
+                    fontWeight: "700",
+                    color: "#667eea",
+                    marginBottom: "8px",
+                  }}
+                >
+                  {fmtNumber(data.sections.viewingBehavior.metrics.HHI)}
+                </div>
+                <div
+                  style={{
+                    fontSize: "16px",
+                    fontWeight: "600",
+                    color: "#7f8c8d",
+                  }}
+                >
+                  HHI 지수
+                </div>
+              </div>
+              <div style={{ textAlign: "center" }}>
+                <div
+                  style={{
+                    fontSize: "36px",
+                    fontWeight: "700",
+                    color: "#667eea",
+                    marginBottom: "8px",
+                  }}
+                >
+                  {data.sections.viewingBehavior.metrics.topChannel}
+                </div>
+                <div
+                  style={{
+                    fontSize: "16px",
+                    fontWeight: "600",
+                    color: "#7f8c8d",
+                  }}
+                >
+                  최애 채널
+                </div>
+              </div>
+              <div style={{ textAlign: "center" }}>
+                <div
+                  style={{
+                    fontSize: "36px",
+                    fontWeight: "700",
+                    color: "#667eea",
+                    marginBottom: "8px",
+                  }}
+                >
+                  {data.sections.viewingBehavior.metrics.topSharePct}%
+                </div>
+                <div
+                  style={{
+                    fontSize: "16px",
+                    fontWeight: "600",
+                    color: "#7f8c8d",
+                  }}
+                >
+                  점유율
+                </div>
+              </div>
+            </div>
+          </div>
 
-        {/* 상세 분석 섹션들 */}
-        <Grid gridDefinition={[{ colspan: 2 }, { colspan: 8 }, { colspan: 2 }]}>
-          <Box></Box>
-          <Box>
-            <SpaceBetween size="xxl">
-              {/* 시청 행태 분석 */}
-              <Box textAlign="center" padding="l">
-                <Box textAlign="center" margin={{ bottom: "l" }}>
-                  <Box fontSize="heading-l" fontWeight="bold">
-                    {data.sections.viewingBehavior.title}
-                  </Box>
-                  <Box margin={{ top: "s" }}>
-                    <StatusIndicator
-                      type={getConfidenceColor(
-                        data.sections.viewingBehavior.confidence
-                      )}
-                    >
-                      신뢰도:{" "}
-                      {getConfidenceLabel(
-                        data.sections.viewingBehavior.confidence
-                      )}
-                    </StatusIndicator>
-                  </Box>
-                </Box>
-                <Box
-                  fontSize="heading-xl"
-                  fontWeight="bold"
-                  margin={{ bottom: "xl" }}
+          {/* 충성도 & 다양성 */}
+          <div
+            style={{
+              background: "white",
+              borderRadius: "16px",
+              padding: "40px",
+              boxShadow: "0 4px 20px rgba(0,0,0,0.08)",
+              border: "1px solid #f0f0f0",
+            }}
+          >
+            <div style={{ textAlign: "center", marginBottom: "30px" }}>
+              <h3
+                style={{
+                  fontSize: "32px",
+                  fontWeight: "700",
+                  margin: "0 0 15px 0",
+                  color: "#2c3e50",
+                }}
+              >
+                {data.sections.loyaltyDiversity.title}
+              </h3>
+              <div
+                style={{
+                  display: "inline-block",
+                  padding: "6px 16px",
+                  borderRadius: "20px",
+                  fontSize: "14px",
+                  fontWeight: "600",
+                  background:
+                    getConfidenceColor(
+                      data.sections.loyaltyDiversity.confidence
+                    ) === "success"
+                      ? "#e8f5e8"
+                      : getConfidenceColor(
+                          data.sections.loyaltyDiversity.confidence
+                        ) === "info"
+                      ? "#e3f2fd"
+                      : getConfidenceColor(
+                          data.sections.loyaltyDiversity.confidence
+                        ) === "pending"
+                      ? "#fff3e0"
+                      : "#ffebee",
+                  color:
+                    getConfidenceColor(
+                      data.sections.loyaltyDiversity.confidence
+                    ) === "success"
+                      ? "#2e7d32"
+                      : getConfidenceColor(
+                          data.sections.loyaltyDiversity.confidence
+                        ) === "info"
+                      ? "#1976d2"
+                      : getConfidenceColor(
+                          data.sections.loyaltyDiversity.confidence
+                        ) === "pending"
+                      ? "#f57c00"
+                      : "#d32f2f",
+                }}
+              >
+                신뢰도:{" "}
+                {getConfidenceLabel(data.sections.loyaltyDiversity.confidence)}
+              </div>
+            </div>
+            <p
+              style={{
+                fontSize: "20px",
+                fontWeight: "500",
+                margin: "0 0 40px 0",
+                lineHeight: 1.6,
+                color: "#34495e",
+              }}
+            >
+              {data.sections.loyaltyDiversity.content}
+            </p>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(2, 1fr)",
+                gap: "30px",
+                marginTop: "40px",
+              }}
+            >
+              <div style={{ textAlign: "center" }}>
+                <div
+                  style={{
+                    fontSize: "36px",
+                    fontWeight: "700",
+                    color: "#667eea",
+                    marginBottom: "8px",
+                  }}
                 >
-                  {data.sections.viewingBehavior.content}
-                </Box>
-                <Grid
-                  gridDefinition={[
-                    { colspan: 4 },
-                    { colspan: 4 },
-                    { colspan: 4 },
-                  ]}
+                  {data.sections.loyaltyDiversity.metrics.loyaltyLabel}
+                </div>
+                <div
+                  style={{
+                    fontSize: "16px",
+                    fontWeight: "600",
+                    color: "#7f8c8d",
+                  }}
                 >
-                  <Box textAlign="center" padding="m">
-                    <Box
-                      fontSize="heading-xl"
-                      fontWeight="bold"
-                      color="text-status-info"
-                    >
-                      {fmtNumber(data.sections.viewingBehavior.metrics.HHI)}
-                    </Box>
-                    <Box
-                      fontSize="heading-xl"
-                      fontWeight="bold"
-                      color="text-body-secondary"
-                    >
-                      HHI 지수
-                    </Box>
-                  </Box>
-                  <Box textAlign="center" padding="m">
-                    <Box
-                      fontSize="heading-xl"
-                      fontWeight="bold"
-                      color="text-status-info"
-                    >
-                      {data.sections.viewingBehavior.metrics.topChannel}
-                    </Box>
-                    <Box
-                      fontSize="heading-xl"
-                      fontWeight="bold"
-                      color="text-body-secondary"
-                    >
-                      최애 채널
-                    </Box>
-                  </Box>
-                  <Box textAlign="center" padding="m">
-                    <Box
-                      fontSize="heading-xl"
-                      fontWeight="bold"
-                      color="text-status-info"
-                    >
-                      {data.sections.viewingBehavior.metrics.topSharePct}%
-                    </Box>
-                    <Box
-                      fontSize="heading-xl"
-                      fontWeight="bold"
-                      color="text-body-secondary"
-                    >
-                      점유율
-                    </Box>
-                  </Box>
-                </Grid>
-              </Box>
+                  충성도 유형
+                </div>
+              </div>
+              <div style={{ textAlign: "center" }}>
+                <div
+                  style={{
+                    fontSize: "36px",
+                    fontWeight: "700",
+                    color: "#667eea",
+                    marginBottom: "8px",
+                  }}
+                >
+                  {fmtNumber(
+                    data.sections.loyaltyDiversity.metrics.channelCount
+                  )}
+                </div>
+                <div
+                  style={{
+                    fontSize: "16px",
+                    fontWeight: "600",
+                    color: "#7f8c8d",
+                  }}
+                >
+                  시청 채널 수
+                </div>
+              </div>
+            </div>
+          </div>
 
-              {/* 충성도 & 다양성 */}
-              <Box textAlign="center" padding="l">
-                <Box textAlign="center" margin={{ bottom: "l" }}>
-                  <Box fontSize="heading-l" fontWeight="bold">
-                    {data.sections.loyaltyDiversity.title}
-                  </Box>
-                  <Box margin={{ top: "s" }}>
-                    <StatusIndicator
-                      type={getConfidenceColor(
-                        data.sections.loyaltyDiversity.confidence
-                      )}
-                    >
-                      신뢰도:{" "}
-                      {getConfidenceLabel(
-                        data.sections.loyaltyDiversity.confidence
-                      )}
-                    </StatusIndicator>
-                  </Box>
-                </Box>
-                <Box
-                  fontSize="heading-xl"
-                  fontWeight="bold"
-                  margin={{ bottom: "xl" }}
+          {/* 활동 패턴 */}
+          <div
+            style={{
+              background: "white",
+              borderRadius: "16px",
+              padding: "40px",
+              boxShadow: "0 4px 20px rgba(0,0,0,0.08)",
+              border: "1px solid #f0f0f0",
+            }}
+          >
+            <div style={{ textAlign: "center", marginBottom: "30px" }}>
+              <h3
+                style={{
+                  fontSize: "32px",
+                  fontWeight: "700",
+                  margin: "0 0 15px 0",
+                  color: "#2c3e50",
+                }}
+              >
+                {data.sections.activityPattern.title}
+              </h3>
+              <div
+                style={{
+                  display: "inline-block",
+                  padding: "6px 16px",
+                  borderRadius: "20px",
+                  fontSize: "14px",
+                  fontWeight: "600",
+                  background:
+                    getConfidenceColor(
+                      data.sections.activityPattern.confidence
+                    ) === "success"
+                      ? "#e8f5e8"
+                      : getConfidenceColor(
+                          data.sections.activityPattern.confidence
+                        ) === "info"
+                      ? "#e3f2fd"
+                      : getConfidenceColor(
+                          data.sections.activityPattern.confidence
+                        ) === "pending"
+                      ? "#fff3e0"
+                      : "#ffebee",
+                  color:
+                    getConfidenceColor(
+                      data.sections.activityPattern.confidence
+                    ) === "success"
+                      ? "#2e7d32"
+                      : getConfidenceColor(
+                          data.sections.activityPattern.confidence
+                        ) === "info"
+                      ? "#1976d2"
+                      : getConfidenceColor(
+                          data.sections.activityPattern.confidence
+                        ) === "pending"
+                      ? "#f57c00"
+                      : "#d32f2f",
+                }}
+              >
+                신뢰도:{" "}
+                {getConfidenceLabel(data.sections.activityPattern.confidence)}
+              </div>
+            </div>
+            <p
+              style={{
+                fontSize: "20px",
+                fontWeight: "500",
+                margin: "0 0 40px 0",
+                lineHeight: 1.6,
+                color: "#34495e",
+              }}
+            >
+              {data.sections.activityPattern.content}
+            </p>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(2, 1fr)",
+                gap: "30px",
+                marginTop: "40px",
+              }}
+            >
+              <div style={{ textAlign: "center" }}>
+                <div
+                  style={{
+                    fontSize: "36px",
+                    fontWeight: "700",
+                    color: "#667eea",
+                    marginBottom: "8px",
+                  }}
                 >
-                  {data.sections.loyaltyDiversity.content}
-                </Box>
-                <Grid gridDefinition={[{ colspan: 6 }, { colspan: 6 }]}>
-                  <Box textAlign="center" padding="m">
-                    <Box
-                      fontSize="heading-xl"
-                      fontWeight="bold"
-                      color="text-status-info"
-                    >
-                      {data.sections.loyaltyDiversity.metrics.loyaltyLabel}
-                    </Box>
-                    <Box
-                      fontSize="heading-xl"
-                      fontWeight="bold"
-                      color="text-body-secondary"
-                    >
-                      충성도 유형
-                    </Box>
-                  </Box>
-                  <Box textAlign="center" padding="m">
-                    <Box
-                      fontSize="heading-xl"
-                      fontWeight="bold"
-                      color="text-status-info"
-                    >
-                      {data.sections.loyaltyDiversity.metrics.channelCount}개
-                    </Box>
-                    <Box
-                      fontSize="heading-xl"
-                      fontWeight="bold"
-                      color="text-body-secondary"
-                    >
-                      시청 채널 수
-                    </Box>
-                  </Box>
-                </Grid>
-              </Box>
+                  {data.sections.activityPattern.metrics.peakHourKST}시
+                </div>
+                <div
+                  style={{
+                    fontSize: "16px",
+                    fontWeight: "600",
+                    color: "#7f8c8d",
+                  }}
+                >
+                  피크 시간
+                </div>
+              </div>
+              <div style={{ textAlign: "center" }}>
+                <div
+                  style={{
+                    fontSize: "36px",
+                    fontWeight: "700",
+                    color: "#667eea",
+                    marginBottom: "8px",
+                  }}
+                >
+                  {data.sections.activityPattern.metrics.nocturnalScore.toFixed(
+                    1
+                  )}
+                </div>
+                <div
+                  style={{
+                    fontSize: "16px",
+                    fontWeight: "600",
+                    color: "#7f8c8d",
+                  }}
+                >
+                  야행성 점수
+                </div>
+              </div>
+            </div>
+          </div>
 
-              {/* 활동 패턴 */}
-              <Box textAlign="center" padding="l">
-                <Box textAlign="center" margin={{ bottom: "l" }}>
-                  <Box fontSize="heading-l" fontWeight="bold">
-                    {data.sections.activityPattern.title}
-                  </Box>
-                  <Box margin={{ top: "s" }}>
-                    <StatusIndicator
-                      type={getConfidenceColor(
-                        data.sections.activityPattern.confidence
-                      )}
-                    >
-                      신뢰도:{" "}
-                      {getConfidenceLabel(
-                        data.sections.activityPattern.confidence
-                      )}
-                    </StatusIndicator>
-                  </Box>
-                </Box>
-                <Box
-                  fontSize="heading-xl"
-                  fontWeight="bold"
-                  margin={{ bottom: "xl" }}
+          {/* 후원 가능성 */}
+          <div
+            style={{
+              background: "white",
+              borderRadius: "16px",
+              padding: "40px",
+              boxShadow: "0 4px 20px rgba(0,0,0,0.08)",
+              border: "1px solid #f0f0f0",
+            }}
+          >
+            <div style={{ textAlign: "center", marginBottom: "30px" }}>
+              <h3
+                style={{
+                  fontSize: "32px",
+                  fontWeight: "700",
+                  margin: "0 0 15px 0",
+                  color: "#2c3e50",
+                }}
+              >
+                {data.sections.donationPotential.title}
+              </h3>
+              <div
+                style={{
+                  display: "inline-block",
+                  padding: "6px 16px",
+                  borderRadius: "20px",
+                  fontSize: "14px",
+                  fontWeight: "600",
+                  background:
+                    getConfidenceColor(
+                      data.sections.donationPotential.confidence
+                    ) === "success"
+                      ? "#e8f5e8"
+                      : getConfidenceColor(
+                          data.sections.donationPotential.confidence
+                        ) === "info"
+                      ? "#e3f2fd"
+                      : getConfidenceColor(
+                          data.sections.donationPotential.confidence
+                        ) === "pending"
+                      ? "#fff3e0"
+                      : "#ffebee",
+                  color:
+                    getConfidenceColor(
+                      data.sections.donationPotential.confidence
+                    ) === "success"
+                      ? "#2e7d32"
+                      : getConfidenceColor(
+                          data.sections.donationPotential.confidence
+                        ) === "info"
+                      ? "#1976d2"
+                      : getConfidenceColor(
+                          data.sections.donationPotential.confidence
+                        ) === "pending"
+                      ? "#f57c00"
+                      : "#d32f2f",
+                }}
+              >
+                신뢰도:{" "}
+                {getConfidenceLabel(data.sections.donationPotential.confidence)}
+              </div>
+            </div>
+            <p
+              style={{
+                fontSize: "20px",
+                fontWeight: "500",
+                margin: "0 0 40px 0",
+                lineHeight: 1.6,
+                color: "#34495e",
+              }}
+            >
+              {data.sections.donationPotential.content}
+            </p>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(1, 1fr)",
+                gap: "30px",
+                marginTop: "40px",
+              }}
+            >
+              <div style={{ textAlign: "center" }}>
+                <div
+                  style={{
+                    fontSize: "36px",
+                    fontWeight: "700",
+                    color: "#667eea",
+                    marginBottom: "8px",
+                  }}
                 >
-                  {data.sections.activityPattern.content}
-                </Box>
-                <Grid gridDefinition={[{ colspan: 6 }, { colspan: 6 }]}>
-                  <Box textAlign="center" padding="m">
-                    <Box
-                      fontSize="heading-xl"
-                      fontWeight="bold"
-                      color="text-status-info"
-                    >
-                      {data.sections.activityPattern.metrics.nocturnalScore.toFixed(
-                        1
-                      )}
-                    </Box>
-                    <Box
-                      fontSize="heading-xl"
-                      fontWeight="bold"
-                      color="text-body-secondary"
-                    >
-                      야행성 점수
-                    </Box>
-                  </Box>
-                  <Box textAlign="center" padding="m">
-                    <Box
-                      fontSize="heading-xl"
-                      fontWeight="bold"
-                      color="text-status-info"
-                    >
-                      {data.sections.activityPattern.metrics.peakHourKST}시
-                    </Box>
-                    <Box
-                      fontSize="heading-xl"
-                      fontWeight="bold"
-                      color="text-body-secondary"
-                    >
-                      피크 시간
-                    </Box>
-                  </Box>
-                </Grid>
-              </Box>
+                  {data.sections.donationPotential.score}/100
+                </div>
+                <div
+                  style={{
+                    fontSize: "16px",
+                    fontWeight: "600",
+                    color: "#7f8c8d",
+                  }}
+                >
+                  후원 가능성 점수
+                </div>
+              </div>
+            </div>
+          </div>
 
-              {/* 후원 가능성 */}
-              <Box textAlign="center" padding="l">
-                <Box textAlign="center" margin={{ bottom: "l" }}>
-                  <Box fontSize="heading-l" fontWeight="bold">
-                    {data.sections.donationPotential.title}
-                  </Box>
-                  <Box margin={{ top: "s" }}>
-                    <StatusIndicator
-                      type={getConfidenceColor(
-                        data.sections.donationPotential.confidence
-                      )}
-                    >
-                      신뢰도:{" "}
-                      {getConfidenceLabel(
-                        data.sections.donationPotential.confidence
-                      )}
-                    </StatusIndicator>
-                  </Box>
-                </Box>
-                <Box
-                  fontSize="heading-xl"
-                  fontWeight="bold"
-                  margin={{ bottom: "xl" }}
+          {/* 채팅 스타일 */}
+          <div
+            style={{
+              background: "white",
+              borderRadius: "16px",
+              padding: "40px",
+              boxShadow: "0 4px 20px rgba(0,0,0,0.08)",
+              border: "1px solid #f0f0f0",
+            }}
+          >
+            <div style={{ textAlign: "center", marginBottom: "30px" }}>
+              <h3
+                style={{
+                  fontSize: "32px",
+                  fontWeight: "700",
+                  margin: "0 0 15px 0",
+                  color: "#2c3e50",
+                }}
+              >
+                {data.sections.chatStyle.title}
+              </h3>
+              <div
+                style={{
+                  display: "inline-block",
+                  padding: "6px 16px",
+                  borderRadius: "20px",
+                  fontSize: "14px",
+                  fontWeight: "600",
+                  background:
+                    getConfidenceColor(data.sections.chatStyle.confidence) ===
+                    "success"
+                      ? "#e8f5e8"
+                      : getConfidenceColor(
+                          data.sections.chatStyle.confidence
+                        ) === "info"
+                      ? "#e3f2fd"
+                      : getConfidenceColor(
+                          data.sections.chatStyle.confidence
+                        ) === "pending"
+                      ? "#fff3e0"
+                      : "#ffebee",
+                  color:
+                    getConfidenceColor(data.sections.chatStyle.confidence) ===
+                    "success"
+                      ? "#2e7d32"
+                      : getConfidenceColor(
+                          data.sections.chatStyle.confidence
+                        ) === "info"
+                      ? "#1976d2"
+                      : getConfidenceColor(
+                          data.sections.chatStyle.confidence
+                        ) === "pending"
+                      ? "#f57c00"
+                      : "#d32f2f",
+                }}
+              >
+                신뢰도: {getConfidenceLabel(data.sections.chatStyle.confidence)}
+              </div>
+            </div>
+            <p
+              style={{
+                fontSize: "20px",
+                fontWeight: "500",
+                margin: "0 0 40px 0",
+                lineHeight: 1.6,
+                color: "#34495e",
+              }}
+            >
+              {data.sections.chatStyle.content}
+            </p>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(3, 1fr)",
+                gap: "30px",
+                marginTop: "40px",
+              }}
+            >
+              <div style={{ textAlign: "center" }}>
+                <div
+                  style={{
+                    fontSize: "36px",
+                    fontWeight: "700",
+                    color: "#667eea",
+                    marginBottom: "8px",
+                  }}
                 >
-                  {data.sections.donationPotential.content}
-                </Box>
-                <Box textAlign="center" padding="m" margin={{ bottom: "l" }}>
-                  <Box
-                    fontSize="heading-xl"
-                    fontWeight="bold"
-                    color="text-status-info"
-                  >
-                    {data.sections.donationPotential.score}/100
-                  </Box>
-                  <Box
-                    fontSize="heading-xl"
-                    fontWeight="bold"
-                    color="text-body-secondary"
-                  >
-                    후원 가능성 점수
-                  </Box>
-                </Box>
-                {data.sections.donationPotential.actions.length > 0 && (
-                  <Box></Box>
-                )}
-              </Box>
+                  {fmtNumber(data.sections.chatStyle.metrics.exclamationRatio)}%
+                </div>
+                <div
+                  style={{
+                    fontSize: "16px",
+                    fontWeight: "600",
+                    color: "#7f8c8d",
+                  }}
+                >
+                  감탄사 비율
+                </div>
+              </div>
+              <div style={{ textAlign: "center" }}>
+                <div
+                  style={{
+                    fontSize: "36px",
+                    fontWeight: "700",
+                    color: "#667eea",
+                    marginBottom: "8px",
+                  }}
+                >
+                  {fmtNumber(data.sections.chatStyle.metrics.questionRatio)}%
+                </div>
+                <div
+                  style={{
+                    fontSize: "16px",
+                    fontWeight: "600",
+                    color: "#7f8c8d",
+                  }}
+                >
+                  질문 비율
+                </div>
+              </div>
+              <div style={{ textAlign: "center" }}>
+                <div
+                  style={{
+                    fontSize: "36px",
+                    fontWeight: "700",
+                    color: "#667eea",
+                    marginBottom: "8px",
+                  }}
+                >
+                  {fmtNumber(
+                    data.sections.chatStyle.metrics.independentTurnRatio
+                  )}
+                  %
+                </div>
+                <div
+                  style={{
+                    fontSize: "16px",
+                    fontWeight: "600",
+                    color: "#7f8c8d",
+                  }}
+                >
+                  독립 대화 비율
+                </div>
+              </div>
+            </div>
+          </div>
 
-              {/* 채팅 스타일 */}
-              <Box textAlign="center" padding="l">
-                <Box textAlign="center" margin={{ bottom: "l" }}>
-                  <Box fontSize="heading-l" fontWeight="bold">
-                    {data.sections.chatStyle.title}
-                  </Box>
-                  <Box margin={{ top: "s" }}>
-                    <StatusIndicator
-                      type={getConfidenceColor(
-                        data.sections.chatStyle.confidence
-                      )}
-                    >
-                      신뢰도:{" "}
-                      {getConfidenceLabel(data.sections.chatStyle.confidence)}
-                    </StatusIndicator>
-                  </Box>
-                </Box>
-                <Box
-                  fontSize="heading-xl"
-                  fontWeight="bold"
-                  margin={{ bottom: "xl" }}
+          {/* 감정 톤 */}
+          <div
+            style={{
+              background: "white",
+              borderRadius: "16px",
+              padding: "40px",
+              boxShadow: "0 4px 20px rgba(0,0,0,0.08)",
+              border: "1px solid #f0f0f0",
+            }}
+          >
+            <div style={{ textAlign: "center", marginBottom: "30px" }}>
+              <h3
+                style={{
+                  fontSize: "32px",
+                  fontWeight: "700",
+                  margin: "0 0 15px 0",
+                  color: "#2c3e50",
+                }}
+              >
+                {data.sections.emotionalTone.title}
+              </h3>
+              <div
+                style={{
+                  display: "inline-block",
+                  padding: "6px 16px",
+                  borderRadius: "20px",
+                  fontSize: "14px",
+                  fontWeight: "600",
+                  background:
+                    getConfidenceColor(
+                      data.sections.emotionalTone.confidence
+                    ) === "success"
+                      ? "#e8f5e8"
+                      : getConfidenceColor(
+                          data.sections.emotionalTone.confidence
+                        ) === "info"
+                      ? "#e3f2fd"
+                      : getConfidenceColor(
+                          data.sections.emotionalTone.confidence
+                        ) === "pending"
+                      ? "#fff3e0"
+                      : "#ffebee",
+                  color:
+                    getConfidenceColor(
+                      data.sections.emotionalTone.confidence
+                    ) === "success"
+                      ? "#2e7d32"
+                      : getConfidenceColor(
+                          data.sections.emotionalTone.confidence
+                        ) === "info"
+                      ? "#1976d2"
+                      : getConfidenceColor(
+                          data.sections.emotionalTone.confidence
+                        ) === "pending"
+                      ? "#f57c00"
+                      : "#d32f2f",
+                }}
+              >
+                신뢰도:{" "}
+                {getConfidenceLabel(data.sections.emotionalTone.confidence)}
+              </div>
+            </div>
+            <p
+              style={{
+                fontSize: "20px",
+                fontWeight: "500",
+                margin: "0 0 40px 0",
+                lineHeight: 1.6,
+                color: "#34495e",
+              }}
+            >
+              {data.sections.emotionalTone.content}
+            </p>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(2, 1fr)",
+                gap: "30px",
+                marginTop: "40px",
+              }}
+            >
+              <div style={{ textAlign: "center" }}>
+                <div
+                  style={{
+                    fontSize: "36px",
+                    fontWeight: "700",
+                    color: "#667eea",
+                    marginBottom: "8px",
+                  }}
                 >
-                  {data.sections.chatStyle.content}
-                </Box>
-                <Grid
-                  gridDefinition={[
-                    { colspan: 4 },
-                    { colspan: 4 },
-                    { colspan: 4 },
-                  ]}
+                  {fmtNumber(
+                    data.sections.emotionalTone.metrics.positiveCuePct
+                  )}
+                  %
+                </div>
+                <div
+                  style={{
+                    fontSize: "16px",
+                    fontWeight: "600",
+                    color: "#7f8c8d",
+                  }}
                 >
-                  <Box textAlign="center" padding="m">
-                    <Box
-                      fontSize="heading-xl"
-                      fontWeight="bold"
-                      color="text-status-info"
-                    >
-                      {data.sections.chatStyle.metrics.exclamationRatio}%
-                    </Box>
-                    <Box
-                      fontSize="heading-xl"
-                      fontWeight="bold"
-                      color="text-body-secondary"
-                    >
-                      감탄사 비율
-                    </Box>
-                  </Box>
-                  <Box textAlign="center" padding="m">
-                    <Box
-                      fontSize="heading-xl"
-                      fontWeight="bold"
-                      color="text-status-info"
-                    >
-                      {data.sections.chatStyle.metrics.questionRatio}%
-                    </Box>
-                    <Box
-                      fontSize="heading-xl"
-                      fontWeight="bold"
-                      color="text-body-secondary"
-                    >
-                      질문 비율
-                    </Box>
-                  </Box>
-                  <Box textAlign="center" padding="m">
-                    <Box
-                      fontSize="heading-xl"
-                      fontWeight="bold"
-                      color="text-status-info"
-                    >
-                      {data.sections.chatStyle.metrics.independentTurnRatio}%
-                    </Box>
-                    <Box
-                      fontSize="heading-xl"
-                      fontWeight="bold"
-                      color="text-body-secondary"
-                    >
-                      독립 대화 비율
-                    </Box>
-                  </Box>
-                </Grid>
-              </Box>
+                  긍정적 표현
+                </div>
+              </div>
+              <div style={{ textAlign: "center" }}>
+                <div
+                  style={{
+                    fontSize: "36px",
+                    fontWeight: "700",
+                    color: "#667eea",
+                    marginBottom: "8px",
+                  }}
+                >
+                  {fmtNumber(
+                    data.sections.emotionalTone.metrics.negativeCuePct
+                  )}
+                  %
+                </div>
+                <div
+                  style={{
+                    fontSize: "16px",
+                    fontWeight: "600",
+                    color: "#7f8c8d",
+                  }}
+                >
+                  부정적 표현
+                </div>
+              </div>
+            </div>
+          </div>
 
-              {/* 감정 & 톤 */}
-              <Box textAlign="center" padding="l">
-                <Box textAlign="center" margin={{ bottom: "l" }}>
-                  <Box fontSize="heading-l" fontWeight="bold">
-                    {data.sections.emotionalTone.title}
-                  </Box>
-                  <Box margin={{ top: "s" }}>
-                    <StatusIndicator
-                      type={getConfidenceColor(
-                        data.sections.emotionalTone.confidence
-                      )}
-                    >
-                      신뢰도:{" "}
-                      {getConfidenceLabel(
-                        data.sections.emotionalTone.confidence
-                      )}
-                    </StatusIndicator>
-                  </Box>
-                </Box>
-                <Box
-                  fontSize="heading-xl"
-                  fontWeight="bold"
-                  margin={{ bottom: "xl" }}
-                >
-                  {data.sections.emotionalTone.content}
-                </Box>
-                <Grid gridDefinition={[{ colspan: 6 }, { colspan: 6 }]}>
-                  <Box textAlign="center" padding="m">
-                    <Box
-                      fontSize="heading-xl"
-                      fontWeight="bold"
-                      color="text-status-success"
-                    >
-                      {data.sections.emotionalTone.metrics.positiveCuePct}%
-                    </Box>
-                    <Box
-                      fontSize="heading-xl"
-                      fontWeight="bold"
-                      color="text-body-secondary"
-                    >
-                      긍정적 표현
-                    </Box>
-                  </Box>
-                  <Box textAlign="center" padding="m">
-                    <Box
-                      fontSize="heading-xl"
-                      fontWeight="bold"
-                      color="text-status-error"
-                    >
-                      {data.sections.emotionalTone.metrics.negativeCuePct}%
-                    </Box>
-                    <Box
-                      fontSize="heading-xl"
-                      fontWeight="bold"
-                      color="text-body-secondary"
-                    >
-                      부정적 표현
-                    </Box>
-                  </Box>
-                </Grid>
-              </Box>
+          {/* 인구통계학적 특성 */}
+          <div
+            style={{
+              background: "white",
+              borderRadius: "16px",
+              padding: "40px",
+              boxShadow: "0 4px 20px rgba(0,0,0,0.08)",
+              border: "1px solid #f0f0f0",
+            }}
+          >
+            <div style={{ textAlign: "center", marginBottom: "30px" }}>
+              <h3
+                style={{
+                  fontSize: "32px",
+                  fontWeight: "700",
+                  margin: "0 0 15px 0",
+                  color: "#2c3e50",
+                }}
+              >
+                {data.sections.demographics.title}
+              </h3>
+              <div
+                style={{
+                  display: "inline-block",
+                  padding: "6px 16px",
+                  borderRadius: "20px",
+                  fontSize: "14px",
+                  fontWeight: "600",
+                  background:
+                    getConfidenceColor(
+                      data.sections.demographics.confidence
+                    ) === "success"
+                      ? "#e8f5e8"
+                      : getConfidenceColor(
+                          data.sections.demographics.confidence
+                        ) === "info"
+                      ? "#e3f2fd"
+                      : getConfidenceColor(
+                          data.sections.demographics.confidence
+                        ) === "pending"
+                      ? "#fff3e0"
+                      : "#ffebee",
+                  color:
+                    getConfidenceColor(
+                      data.sections.demographics.confidence
+                    ) === "success"
+                      ? "#2e7d32"
+                      : getConfidenceColor(
+                          data.sections.demographics.confidence
+                        ) === "info"
+                      ? "#1976d2"
+                      : getConfidenceColor(
+                          data.sections.demographics.confidence
+                        ) === "pending"
+                      ? "#f57c00"
+                      : "#d32f2f",
+                }}
+              >
+                신뢰도:{" "}
+                {getConfidenceLabel(data.sections.demographics.confidence)}
+              </div>
+            </div>
+            <p
+              style={{
+                fontSize: "20px",
+                fontWeight: "500",
+                margin: "0 0 40px 0",
+                lineHeight: 1.6,
+                color: "#34495e",
+              }}
+            >
+              {data.sections.demographics.content}
+            </p>
+          </div>
+        </SpaceBetween>
+      </div>
 
-              {/* 인구통계 가설 */}
-              <Box textAlign="center" padding="l">
-                <Box textAlign="center" margin={{ bottom: "l" }}>
-                  <Box fontSize="heading-l" fontWeight="bold">
-                    {data.sections.demographics.title}
-                  </Box>
-                  <Box margin={{ top: "s" }}>
-                    <StatusIndicator
-                      type={getConfidenceColor(
-                        data.sections.demographics.confidence
-                      )}
-                    >
-                      신뢰도:{" "}
-                      {getConfidenceLabel(
-                        data.sections.demographics.confidence
-                      )}
-                    </StatusIndicator>
-                  </Box>
-                </Box>
-                <Box
-                  fontSize="heading-xl"
-                  fontWeight="bold"
-                  margin={{ bottom: "xl" }}
-                >
-                  {data.sections.demographics.content}
-                </Box>
-              </Box>
-            </SpaceBetween>
-          </Box>
-          <Box></Box>
-        </Grid>
-
-        <Box textAlign="center" margin={{ top: "xl" }}>
-          <Button onClick={() => navigate(-1)}>뒤로 가기</Button>
-        </Box>
-      </Box>
-    </SpaceBetween>
+      {/* 뒤로 가기 버튼 */}
+      <div style={{ textAlign: "center", marginTop: "60px" }}>
+        <Button onClick={() => navigate(-1)}>뒤로 가기</Button>
+      </div>
+    </div>
   );
 }
