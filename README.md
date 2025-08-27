@@ -13,7 +13,7 @@
 
 ## 데모
 
-[YouTube 데모 영상](https://studio.youtube.com/video/ojEMXfVIgbY/edit)
+[YouTube 데모 영상](https://youtu.be/ojEMXfVIgbY)
 
 ## 기술 스택
 
