@@ -1,69 +1,91 @@
-# React + TypeScript + Vite
+# Chat.GG
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+채팅 데이터와 사용자 상호작용을 분석하기 위한 웹 대시보드입니다. React, TypeScript, Vite로 구축되었습니다.
 
-Currently, two official plugins are available:
+## 주요 기능
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- 채널 선택 및 관리
+- 사용자 분석 및 세부 정보
+- 채팅 기록 및 분석
+- 성격 분석
+- 분석 대시보드
+- AWS 통합
 
-## Expanding the ESLint configuration
+## 데모
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+[YouTube 데모 영상](https://studio.youtube.com/video/ojEMXfVIgbY/edit)
 
-```js
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## 기술 스택
 
-      // Remove tseslint.configs.recommended and replace with this
-      ...tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      ...tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      ...tseslint.configs.stylisticTypeChecked,
+- **프론트엔드**: React 19, TypeScript, Vite
+- **UI 컴포넌트**: AWS Cloudscape Design System
+- **라우팅**: React Router v7
+- **시각화**: React D3 Cloud
+- **애니메이션**: Framer Motion
+- **AWS 통합**: AWS SDK for JavaScript v3
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## 시작하기
+
+### 필수 조건
+
+- Node.js (권장 버전: 18+)
+- npm 또는 yarn
+
+### 설치
+
+```bash
+# 저장소 복제
+git clone [저장소-URL]
+cd fyc-web
+
+# 의존성 설치
+npm install
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### 개발
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+# 개발 서버 시작
+npm run dev
 ```
+
+애플리케이션은 `http://localhost:5173`에서 접근할 수 있습니다.
+
+### 빌드
+
+```bash
+# 프로덕션용 빌드
+npm run build
+```
+
+### 미리보기
+
+```bash
+# 프로덕션 빌드 미리보기
+npm run preview
+```
+
+## 프로젝트 구조
+
+```
+fyc-web/
+├── src/
+│   ├── api/            # API 클라이언트 및 서비스
+│   ├── components/     # 재사용 가능한 UI 컴포넌트
+│   ├── config/         # 설정 파일
+│   ├── pages/          # 애플리케이션 페이지
+│   └── types/          # TypeScript 타입 정의
+├── public/             # 정적 자산
+└── ...설정 파일
+```
+
+## 사용 가능한 스크립트
+
+- `npm run dev` - 개발 서버 시작
+- `npm run build` - 프로덕션용 빌드
+- `npm run lint` - ESLint 실행
+- `npm run preview` - 프로덕션 빌드 미리보기
+
+## 라이센스
+
+[라이센스 정보]
